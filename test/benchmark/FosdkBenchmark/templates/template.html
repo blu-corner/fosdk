@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+    <style>
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 40%;
+    }
+
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+    </style>
+    </head>
+    <body>
+            <div align="center">
+            <h1><b>FOSDK Benchmarking<b></h1>
+
+
+            <h2>Order Entry Consolidated Results</h2>
+            <table>
+                <tr>
+                    <td>Average</td>
+                    <td>{{ ent.avg }}</td>
+                </tr>
+                <tr>
+                    <td>Deviation</td>
+                    <td>{{ ent.deviation }}</td>
+                </tr>
+                <tr>
+                    <td>Maximum</td>
+                    <td>{{ ent.max }}</td>
+                </tr>
+                <tr>
+                    <td>Median</td>
+                    <td>{{ ent.median }}</td>
+                </tr>
+                <tr>
+                    <td>Minimum</td>
+                    <td>{{ ent.min }}</td>
+                </tr>
+                <tr>
+                    <td>CPU Frequency</td>
+                    <td>{{ ent.cpu_frequency }}</td>
+                </tr>
+                <tr>
+                    <td>Method</td>
+                    <td>{{ ent.method }}</td>
+                </tr>
+            </table>
+            <p><img src = "{{ source }}/EntryDeltas.png"></p>
+            <h2>Order Acked Consolidated Results</h2>
+            <table>
+                <tr>
+                    <td>Average</td>
+                    <td>{{ ack.avg }}</td>
+                </tr>
+                <tr>
+                    <td>Deviation</td>
+                    <td>{{ ack.deviation }}</td>
+                </tr>
+                <tr>
+                    <td>Maximum</td>
+                    <td>{{ ack.max }}</td>
+                </tr>
+                <tr>
+                    <td>Median</td>
+                    <td>{{ ack.median }}</td>
+                </tr>
+                <tr>
+                    <td>Minimum</td>
+                    <td>{{ ack.min }}</td>
+                </tr>
+                <tr>
+                    <td>CPU Frequency</td>
+                    <td>{{ ack.cpu_frequency }}</td>
+                </tr>
+                <tr>
+                    <td>Method</td>
+                    <td>{{ ack.method }}</td>
+                </tr>
+            </table>
+            <p><img src = "{{ source }}/AckedDeltas.png"></p>
+            
+            <h2>Round Trips Consolidated Results</h2>
+            <table>
+                <tr>
+                    <td>Average</td>
+                    <td>{{ rt.avg }}</td>
+                </tr>
+                <tr>
+                    <td>Deviation</td>
+                    <td>{{ rt.deviation }}</td>
+                </tr>
+                <tr>
+                    <td>Maximum</td>
+                    <td>{{ rt.max }}</td>
+                </tr>
+                <tr>
+                    <td>Median</td>
+                    <td>{{ rt.median }}</td>
+                </tr>
+                <tr>
+                    <td>Minimum</td>
+                    <td>{{ rt.min }}</td>
+                </tr>
+                <tr>
+                    <td>CPU Frequency</td>
+                    <td>{{ rt.cpu_frequency }}</td>
+                </tr>
+                <tr>
+                    <td>Method</td>
+                    <td>{{ rt.method }}</td>
+                </tr>
+            </table>
+            <p><img src = "{{ source }}/RoundTrips.png"></p>
+
+            <h2>System Information</h2>
+            <p>Arch: {{ sys.arch }}</p>
+            <p>Cores: {{ sys.cores }}</p>
+            <p>CPU Model: {{ sys.cpu_model }}</p>
+            <p>Distro: {{ sys.distro }}</p>
+            <p>Machine: {{ sys.machine }}</p>
+            <p>Memory: {{ sys.memory }}</p>
+            <p>Node: {{ sys.node }}</p>
+            <p>Processor: {{ sys.processor }}</p>
+            <p>Release: {{ sys.release }}</p>
+            <p>System: {{ sys.system }}</p>
+            <p>Version: {{ sys.version }}</p>
+
+            </div>
+    </body>
+</html>
+

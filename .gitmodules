@@ -1,0 +1,24 @@
+[submodule "ext/codec"]
+	path = ext/codec
+	url = https://github.com/blu-corner/codec.git
+[submodule "ext/logger"]
+	path = ext/logger
+	url = https://github.com/blu-corner/logger.git
+[submodule "ext/properties"]
+	path = ext/properties
+	url = https://github.com/blu-corner/properties.git
+[submodule "ext/sbf"]
+	path = ext/sbf
+	url = https://github.com/blu-corner/sbf.git
+[submodule "ext/utils"]
+	path = ext/utils
+	url = https://github.com/blu-corner/utils.git
+[submodule "ext/cdr"]
+	path = ext/cdr
+	url = https://github.com/blu-corner/cdr.git
+[submodule "ext/googletest"]
+	path = ext/googletest
+	url = https://github.com/google/googletest.git
+[submodule "ext/libevent"]
+	path = ext/libevent
+	url = https://github.com/libevent/libevent.git

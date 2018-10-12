@@ -1,0 +1,5 @@
+matplotlib==2.2.2
+scapy==2.4.0
+numpy==1.14.2
+xhtml2pdf==0.2.2
+jinja2==2.10
