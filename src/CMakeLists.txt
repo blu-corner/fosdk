@@ -26,7 +26,7 @@ include_directories(
   )
 
 add_library (gwc SHARED ${SOURCES})
-target_link_libraries (gwc cdr utils properties logger sbfcore sbfcommon)
+target_link_libraries (gwc cdr utils properties logger sbfcore sbfcommon sbfnetwork)
 
 install (TARGETS gwc
   EXPORT gwc
