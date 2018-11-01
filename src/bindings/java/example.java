@@ -11,15 +11,15 @@ public class example
     {
         public LocalLogHandler () { super(); }
 
-        public LogSeverity getLevel() {
-            return LogSeverity.DEBUG;
+        public LogSeverity.level getLevel() {
+            return LogSeverity.level.DEBUG;
         }
 
         public String getFormat() {
             return "{severity} {name} {time} {message}";
         }
 
-        public void handle (LogSeverity severity,
+        public void handle (LogSeverity.level severity,
                             String name,
                             SWIGTYPE_p_tm tm_time,
                             SWIGTYPE_p_timeval tv,
@@ -54,34 +54,34 @@ public class example
         }
 
         public void onConnected () {
-            this.logger.log (LogSeverity.INFO, "session logged on...");
+            this.logger.info("session logged on...");
         }
 
-        public void onLoggingOn (cdr msg) {
-            this.logger.log (LogSeverity.INFO, "session logging on...");
+        public void onLoggingOn (Cdr msg) {
+            this.logger.info("session logging on...");
 
             // set username and password
-            msg.setString (Codecs.UserName, this.username);
-            msg.setString (Codecs.Password, this.password);
+            msg.setString (Fields.UserName, this.username);
+            msg.setString (Fields.Password, this.password);
         }
 
         public boolean onError (String errorMessage) {
-            this.logger.log (LogSeverity.ERROR, "session err: " + errorMessage);
+            this.logger.err( "session err: " + errorMessage);
 
             // return true to attempt reconnection
             return true;
         }
 
-        public void onLoggedOn (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "session logged on...");
+        public void onLoggedOn (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("session logged on...");
         }
 
-        public void onLoggedOff (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "session logged off...");
+        public void onLoggedOff (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("session logged off...");
         }
 
         public void onGap (java.math.BigInteger expected, java.math.BigInteger recieved) {
-            this.logger.log (LogSeverity.INFO, "gap deteched expected [" + expected + "] got [" + recieved + "]");
+            this.logger.info("gap deteched expected [" + expected + "] got [" + recieved + "]");
         }
     }
 
@@ -97,96 +97,97 @@ public class example
             this.logger = logger;
         }
     
-        public void onAdmin (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onAdmin msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onAdmin (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onAdmin msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onOrderAck (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onOrderAck msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onOrderAck (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onOrderAck msg...");
+            this.logger.info(msg.toString ());
 
             // get order id from ack
-            String orderId = msg.getString (Codecs.OrderID);
+            // get order id from ack
+            String orderId = msg.getString (Fields.OrderID);
         
             // send modify
-            cdr modify = new cdr();
-            modify.setString (Codecs.OriginalClientOrderID, "myorder");
-            modify.setString (Codecs.ClientOrderID, "myorder1");
-            modify.setString (Codecs.OrderID, orderId);
-            modify.setInteger (Codecs.InstrumentID, 133215); // VOD.L
-            modify.setInteger (Codecs.OrderQty, 2000);
-            modify.setInteger (Codecs.OrderType, 2);
-            modify.setDouble (Codecs.LimitPrice, 1234.56);
-            modify.setInteger (Codecs.Side, 1);
-            modify.setString (Codecs.Account, "account");
-            modify.setInteger (Codecs.ExpireDateTime, 0);
-            modify.setInteger (Codecs.DisplayQty, 0);
-            modify.setDouble (Codecs.StopPrice, 0.0);
-            modify.setInteger (Codecs.PassiveOnlyOrder, 0);
-            modify.setInteger (Codecs.ClientID, 1234);
-            modify.setInteger (Codecs.MinimumQuantity, 0);
-            modify.setInteger (Codecs.PassiveOnlyOrder, 0);
-            modify.setInteger (Codecs.ReservedField1, 0);
-            modify.setInteger (Codecs.ReservedField2, 0);
-            modify.setInteger (Codecs.ReservedField3, 0);
-            modify.setInteger (Codecs.ReservedField4, 0);
+            Cdr modify = new Cdr();
+            modify.setString (Fields.OriginalClientOrderID, "myorder");
+            modify.setString (Fields.ClientOrderID, "myorder1");
+            modify.setString (Fields.OrderID, orderId);
+            modify.setInteger (Fields.InstrumentID, 133215); // VOD.L
+            modify.setInteger (Fields.OrderQty, 2000);
+            modify.setInteger (Fields.OrderType, 2);
+            modify.setDouble (Fields.LimitPrice, 1234.56);
+            modify.setInteger (Fields.Side, 1);
+            modify.setString (Fields.Account, "account");
+            modify.setInteger (Fields.ExpireDateTime, 0);
+            modify.setInteger (Fields.DisplayQty, 0);
+            modify.setDouble (Fields.StopPrice, 0.0);
+            modify.setInteger (Fields.PassiveOnlyOrder, 0);
+            modify.setInteger (Fields.ClientID, 1234);
+            modify.setInteger (Fields.MinimumQuantity, 0);
+            modify.setInteger (Fields.PassiveOnlyOrder, 0);
+            modify.setInteger (Fields.ReservedField1, 0);
+            modify.setInteger (Fields.ReservedField2, 0);
+            modify.setInteger (Fields.ReservedField3, 0);
+            modify.setInteger (Fields.ReservedField4, 0);
     
             if (!this.gwc.sendModify (modify))
-                this.logger.log (LogSeverity.ERROR, "failed to send modify");
+                this.logger.err("failed to send modify");
         }
 
-        public void onOrderRejected (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onOrderRejected msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onOrderRejected (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onOrderRejected msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onOrderDone (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onOrderDone msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onOrderDone (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onOrderDone msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onOrderFill (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onOrderFill msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onOrderFill (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onOrderFill msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onModifyAck (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onModifyAck msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onModifyAck (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onModifyAck msg...");
+            this.logger.info(msg.toString ());
 
             // cancel order
-            String orderId = msg.getString (Codecs.OrderID);
+            String orderId = msg.getString (Fields.OrderID);
         
-            cdr cancel = new cdr ();
-            cancel.setString (Codecs.OriginalClientOrderID, "myorder1");
-            cancel.setString (Codecs.ClientOrderID, "myorder2");
-            cancel.setString (Codecs.OrderID, orderId);
-            cancel.setInteger (Codecs.InstrumentID, 133215); // VOD.L
-            cancel.setInteger (Codecs.Side, 1);
-            cancel.setString (Codecs.RfqID, "XXXX");
+            Cdr cancel = new Cdr ();
+            cancel.setString (Fields.OriginalClientOrderID, "myorder1");
+            cancel.setString (Fields.ClientOrderID, "myorder2");
+            cancel.setString (Fields.OrderID, orderId);
+            cancel.setInteger (Fields.InstrumentID, 133215); // VOD.L
+            cancel.setInteger (Fields.Side, 1);
+            cancel.setString (Fields.RfqID, "XXXX");
 
-            cancel.setInteger (Codecs.ReservedField1, 0);
-            cancel.setInteger (Codecs.ReservedField2, 0);
+            cancel.setInteger (Fields.ReservedField1, 0);
+            cancel.setInteger (Fields.ReservedField2, 0);
     
             if (!this.gwc.sendCancel (cancel)) {
-                this.logger.log (LogSeverity.INFO, "failed to send cancel myorder1...");
+                this.logger.info( "failed to send cancel myorder1...");
             }
         }
 
-        public void onModifyRejected (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "oModifyRejected msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onModifyRejected (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("oModifyRejected msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onCancelRejected (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onCacnelRejected msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onCancelRejected (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onCacnelRejected msg...");
+            this.logger.info(msg.toString ());
         }
 
-        public void onMsg (java.math.BigInteger seqno, cdr msg) {
-            this.logger.log (LogSeverity.INFO, "onMsg msg...");
-            this.logger.log (LogSeverity.INFO, msg.toString ());
+        public void onMsg (java.math.BigInteger seqno, Cdr msg) {
+            this.logger.info("onMsg msg...");
+            this.logger.info(msg.toString ());
         }
     }
 
@@ -195,14 +196,7 @@ public class example
     public void doMain()
     {
         LogService logService = LogService.get ();
-        LocalLogHandler localLogHandler = new LocalLogHandler();
-        try {
-            logService.addHandler (localLogHandler);
-        } catch (Exception e) {
-            System.err.println("failed to add log handler");
-            return;
-        }   
-
+                                                                           
         Properties props = new Properties("gwc", "millennium", "sim");
         props.setProperty ("real_time_host", "127.0.0.1:9899");
         props.setProperty ("recovery_host", "127.0.0.1:10000");
@@ -218,13 +212,13 @@ public class example
         SessionCallbacks sessionCbs = new SessionCallbacks(gwc, log, "USER1", "PASS1");
         MessageCallbacks messageCbs = new MessageCallbacks(gwc, log);
 
-        log.log (LogSeverity.INFO, "initialising connector...");
+        log.info("initialising connector...");
         if (!gwc.init (sessionCbs, messageCbs, props)) {
             System.out.println ("failed to initialise connector...");
             return;
         }
 
-        log.log (LogSeverity.INFO, "starting connector...");
+        log.info("starting connector...");
         if (!gwc.start (false)) {
             System.out.println ("failed to initialise connector...");
             return;
@@ -240,28 +234,28 @@ public class example
         order.setTif (gwcTif.GWC_TIF_DAY);
         order.setSide (gwcSide.GWC_SIDE_BUY);
         order.setOrderType (gwcOrderType.GWC_ORDER_TYPE_LIMIT);
-        order.setString (Codecs.ClientOrderID, "myorder");
-        order.setInteger (Codecs.InstrumentID, 133215); // VOD.L
-        order.setInteger (Codecs.AutoCancel, 1);
+        order.setString (Fields.ClientOrderID, "myorder");
+        order.setInteger (Fields.InstrumentID, 133215); // VOD.L
+        order.setInteger (Fields.AutoCancel, 1);
 
-        order.setString (Codecs.TraderID, "TX1");
-        order.setString (Codecs.Account, "account");
-        order.setInteger (Codecs.ClearingAccount, 1);
-        order.setInteger (Codecs.FXMiFIDFlags, 0);
-        order.setInteger (Codecs.PartyRoleQualifiers, 0);
-        order.setInteger (Codecs.ExpireDateTime, 0);
-        order.setInteger (Codecs.DisplayQty, 0);
-        order.setInteger (Codecs.Capacity, 1);
-        order.setInteger (Codecs.OrderSubType, 0);
-        order.setInteger (Codecs.Anonymity, 0);
-        order.setDouble (Codecs.StopPrice, 0.0);
-        order.setInteger (Codecs.PassiveOnlyOrder, 0);
-        order.setInteger (Codecs.ClientID, 1234);
-        order.setInteger (Codecs.InvestmentDecisionMaker, 0);
-        order.setInteger (Codecs.MinimumQuantity, 0);
-        order.setInteger (Codecs.ExecutingTrader, 7676);
+        order.setString (Fields.TraderID, "TX1");
+        order.setString (Fields.Account, "account");
+        order.setInteger (Fields.ClearingAccount, 1);
+        order.setInteger (Fields.FXMiFIDFlags, 0);
+        order.setInteger (Fields.PartyRoleQualifiers, 0);
+        order.setInteger (Fields.ExpireDateTime, 0);
+        order.setInteger (Fields.DisplayQty, 0);
+        order.setInteger (Fields.Capacity, 1);
+        order.setInteger (Fields.OrderSubType, 0);
+        order.setInteger (Fields.Anonymity, 0);
+        order.setDouble (Fields.StopPrice, 0.0);
+        order.setInteger (Fields.PassiveOnlyOrder, 0);
+        order.setInteger (Fields.ClientID, 1234);
+        order.setInteger (Fields.InvestmentDecisionMaker, 0);
+        order.setInteger (Fields.MinimumQuantity, 0);
+        order.setInteger (Fields.ExecutingTrader, 7676);
 
-        log.log (LogSeverity.INFO, "sending-input-order");
+        log.info("sending-input-order");
         if (!gwc.sendOrder (order)) {
             System.out.println ("failed to send order myorder...");
             return;
@@ -287,13 +281,10 @@ public class example
             Thread.currentThread().interrupt();
         }
 
-        
-        log.log (LogSeverity.INFO, "destroying connector");
-        logService.removeHandler (localLogHandler);
+        log.info("destroying connector");
     }
     
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         example instance = new example();
         instance.doMain();
     }
