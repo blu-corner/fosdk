@@ -16,10 +16,10 @@ swig_link_libraries(Fosdk gwc cdr utils logger ${JNI_LIBRARIES})
 
 set(CMAKE_JAR_CLASSES_PREFIX com/neueda/fosdk)
 set(CMAKE_JAVA_INCLUDE_PATH
-  ${CMAKE_INSTALL_PREFIX}/lib/java/CodecsJNI.jar
+  ${CMAKE_INSTALL_PREFIX}/lib/java/CodecJNI.jar
   ${CMAKE_INSTALL_PREFIX}/lib/java/CdrJNI.jar
-  ${CMAKE_INSTALL_PREFIX}/lib/java/ConfigJNI.jar
-  ${CMAKE_INSTALL_PREFIX}/lib/java/LogJNI.jar)
+  ${CMAKE_INSTALL_PREFIX}/lib/java/PropertiesJNI.jar
+  ${CMAKE_INSTALL_PREFIX}/lib/java/LoggerJNI.jar)
 
 add_jar(FosdkJNI
   SOURCES

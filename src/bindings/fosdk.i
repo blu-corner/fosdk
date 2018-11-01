@@ -22,11 +22,16 @@
 %define __attribute__(x)
 %enddef
 
+%rename(Cdr) neueda::cdr;
+%rename(Properties) neueda::properties;
+%rename(Logger) neueda::logger;
+
 %import(module="Config") "properties.h"
 %import(module="Log") "logger.h"
 %import(module="CommonDataRepresentation") "cdr.h"
 %import(module="Codecs") "codec.h"
 %import(module="Codecs") "../../ext/codec/src/bindings/codecBuffer.h"
+
 
 // directors
 %feature("director") gwcSessionCallbacks;

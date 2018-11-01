@@ -1,5 +1,5 @@
 import com.neueda.logger.*;
-import com.neueda.config.*;
+import com.neueda.properties.*;
 import com.neueda.fosdk.*;
 import com.neueda.codec.*;
 import com.neueda.cdr.*;
@@ -203,11 +203,10 @@ public class example
             return;
         }   
 
-        RawProperties properties = new RawProperties();
-        Properties props = new Properties(properties, "gwc", "millennium", "sim");
+        Properties props = new Properties("gwc", "millennium", "sim");
         props.setProperty ("real_time_host", "127.0.0.1:9899");
         props.setProperty ("recovery_host", "127.0.0.1:10000");
-        props.setProperty ("venue", "lse")
+        props.setProperty ("venue", "lse");
 
         Logger log = logService.getLogger ("MILLENIUM_TEST");
         gwcConnector gwc = gwcConnectorFactory.get (log, "millennium", props);

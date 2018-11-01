@@ -39,27 +39,24 @@
 %apply (char *STRING, int LENGTH) { (const void* ptr, size_t len) };
 
 %pragma(java) moduleimports=%{
-import com.neueda.config.RawProperties;
-import com.neueda.config.Properties;
+import com.neueda.properties.Properties;
 import com.neueda.logger.Logger;
 import com.neueda.codec.Buffer;
-import com.neueda.cdr.cdr;
+import com.neueda.cdr.Cdr;
 %}
 
 %pragma(java) jniclassimports=%{
-import com.neueda.config.RawProperties;
-import com.neueda.config.Properties;
+import com.neueda.properties.Properties;
 import com.neueda.logger.Logger;
 import com.neueda.codec.Buffer;
-import com.neueda.cdr.cdr;
+import com.neueda.cdr.Cdr;
 %}
 
 %typemap(javaimports) SWIGTYPE %{
-import com.neueda.config.RawProperties;
-import com.neueda.config.Properties;
+import com.neueda.properties.Properties;
 import com.neueda.logger.Logger;
 import com.neueda.codec.Buffer;
-import com.neueda.cdr.cdr;
+import com.neueda.cdr.Cdr;
 
 %}
 
