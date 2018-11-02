@@ -16,5 +16,7 @@ add_library (gwcswx SHARED ${SOURCES})
 target_link_libraries (gwcswx gwcsoupbin swxcodec)
 
 install (TARGETS gwcswx
+         RUNTIME DESTINATION lib
+         ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install (FILES ${INSTALL_HEADERS} DESTINATION include/gwc)

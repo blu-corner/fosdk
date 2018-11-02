@@ -860,7 +860,7 @@ gwcMillennium<CodecT>::init (gwcSessionCallbacks* sessionCbs,
 
     string rtHost;
     bool ok = props.get ("real_time_host", rtHost);
-    if (not ok)
+    if (!ok)
     {
         mLog->err ("failed to find property [%s]", "real_time_host");
         return false;
@@ -874,7 +874,7 @@ gwcMillennium<CodecT>::init (gwcSessionCallbacks* sessionCbs,
 
     string rcHost;
     ok = props.get ("recovery_host", rcHost);
-    if (not ok)
+    if (!ok)
     {
         mLog->err ("missing propertry recovery_host");
         return false;

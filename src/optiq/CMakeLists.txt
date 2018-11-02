@@ -14,5 +14,7 @@ add_library (gwcoptiq SHARED ${SOURCES})
 target_link_libraries (gwcoptiq gwc optiqcodec)
 
 install (TARGETS gwcoptiq
+         RUNTIME DESTINATION lib
+         ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install (FILES ${INSTALL_HEADERS} DESTINATION include/gwc)
