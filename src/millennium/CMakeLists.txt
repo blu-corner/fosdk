@@ -20,5 +20,7 @@ add_library (gwcmillennium SHARED ${SOURCES})
 target_link_libraries (gwcmillennium gwc lsecodec oslocodec turquoisecodec)
 
 install (TARGETS gwcmillennium
+         RUNTIME DESTINATION lib
+         ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install (FILES ${INSTALL_HEADERS} DESTINATION include/gwc)

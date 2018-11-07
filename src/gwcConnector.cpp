@@ -10,7 +10,11 @@ gwcConnector*
 gwcConnectorFactory::get (logger* log, const std::string& type, const neueda::properties& props)
 {
     std::stringstream lib;
+#ifndef WIN32
     lib << "libgwc" << type << SBF_SHLIB_SUFFIX;
+#else
+    lib << "gwc" << type << ".dll";
+#endif
     dl_handle handle = dl_open (lib.str ().c_str ());
 
     if (handle == NULL) {

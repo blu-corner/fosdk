@@ -127,7 +127,7 @@ gwcSoupBin::onConnectionReady ()
     neueda::codec&    codec = getCodec ();
 
     bool ok = codec.encode (logon, space, sizeof space, used) == GW_CODEC_SUCCESS;
-    if (not ok)
+    if (!ok)
     {
         mLog->err ("%s", codec.getLastError ().c_str ());
         return;
@@ -333,7 +333,7 @@ void
 gwcSoupBin::onHbTimeout (sbfTimer timer, void* closure)
 {
     gwcSoupBin* gwc = reinterpret_cast<gwcSoupBin*>(closure);
-    if (not gwc->mSeenMessageWithinHbInterval)
+    if (!gwc->mSeenMessageWithinHbInterval)
     {
         gwc->error ("missed heartbeats");
         return;
@@ -475,7 +475,7 @@ gwcSoupBin::init (gwcSessionCallbacks* sessionCbs,
 
     string rtHost;
     bool ok = props.get ("host", rtHost);
-    if (not ok)
+    if (!ok)
     {
         mLog->err ("failed to find property [%s]", "real_time_host");
         return false;
@@ -582,7 +582,7 @@ gwcSoupBin::stop ()
     neueda::codec&    codec = getCodec ();
     
     bool ok = codec.encode (logoff, space, sizeof space, used) == GW_CODEC_SUCCESS;
-    if (not ok)
+    if (!ok)
     {
         mLog->err ("%s", codec.getLastError ().c_str ());
         return false;

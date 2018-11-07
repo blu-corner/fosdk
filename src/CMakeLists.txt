@@ -30,6 +30,8 @@ target_link_libraries (gwc cdr utils properties logger sbfcore sbfcommon sbfnetw
 
 install (TARGETS gwc
   EXPORT gwc
+  RUNTIME DESTINATION lib
+  ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 install (FILES ${INSTALL_HEADERS} DESTINATION include/gwc)
 

@@ -14,5 +14,7 @@ add_library (gwcxetra SHARED ${SOURCES})
 target_link_libraries (gwcxetra gwc xetracodec)
 
 install (TARGETS gwcxetra
+         RUNTIME DESTINATION lib
+         ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install (FILES ${INSTALL_HEADERS} DESTINATION include/gwc)
