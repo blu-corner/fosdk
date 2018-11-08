@@ -4,7 +4,7 @@
 }
 
 %typemap(csimports) SWIGTYPE %{
-using Neueda.Config;
+using Neueda.Properties;
 using Neueda.Log;
 using Neueda.Cdr;
 using Neueda.Codecs;

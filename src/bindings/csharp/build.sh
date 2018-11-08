@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -e
 
-mcs -out:test.exe -reference:Config.dll -reference:Log.dll -reference:Cdr.dll -reference:Codec.dll -reference:Fosdk.dll example.cs
+LD_LILBRARY_PATH=`pwd`/..:`pwd`:$LD_LIBRARY_PATH mcs -out:test.exe -reference:PropertiesBindings.dll -reference:LoggerBindings.dll -reference:CdrBindings.dll -reference:CodecsBindings.dll -reference:FosdkBindings.dll example.cs
