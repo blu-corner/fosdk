@@ -17,7 +17,8 @@ set_target_properties(_pyFosdk PROPERTIES OUTPUT_NAME "_Fosdk")
 set(PYTHON_INSTALL_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
   ${CMAKE_CURRENT_SOURCE_DIR}/example.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/example-raw.py)
+  ${CMAKE_CURRENT_SOURCE_DIR}/example-raw.py
+  ${CMAKE_CURRENT_BINARY_DIR}/Fosdk.py)
 
 # Declare install target for python
 install(TARGETS _pyFosdk
