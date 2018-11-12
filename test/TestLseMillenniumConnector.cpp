@@ -12,7 +12,7 @@ class MockLseConnector : public gwcMillennium<lseCodec>
 {
 public:
     MockLseConnector (logger* log)
-        : gwcMillennium (log)
+        : gwcMillennium<lseCodec> (log)
     { }
 
     MOCK_METHOD1 (start, bool(bool reset));
