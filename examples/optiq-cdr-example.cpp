@@ -2,7 +2,7 @@
 
 #include "gwcConnector.h"
 #include "fields.h"
-#include "OptiqConstants.h"
+#include "optiqConstants.h"
 
 using namespace std;
 using namespace neueda;
@@ -184,18 +184,18 @@ int main (int argc, char** argv)
     int64_t clOrdId = time (NULL);
     border.setInteger (ClientOrderID, clOrdId);
     border.setInteger (SymbolIndex, 1110000);
-    border.setInteger (EMM, OPTIQ_EMM_Cash_and_Derivative_Central_Order_Book);
+    border.setInteger (EMM, OPTIQ_EMM_CASH_AND_DERIVATIVE_CENTRAL_ORDER_BOOK);
     border.setInteger (ExecutionWithinFirmShortCode, 3);
     border.setInteger (TradingCapacity, 
-                       OPTIQ_TradingCapacity_Dealing_on_own_account);
-    border.setInteger (AccountType, OPTIQ_AccountType_Client);
-    border.setInteger (LPRole, OPTIQ_LPRole_Retail_Liquidity_Provider);
+                       OPTIQ_TRADINGCAPACITY_DEALING_ON_OWN_ACCOUNT);
+    border.setInteger (AccountType, OPTIQ_ACCOUNTTYPE_CLIENT);
+    border.setInteger (LPRole, OPTIQ_LPROLE_RETAIL_LIQUIDITY_PROVIDER);
     border.setInteger (ExecutionInstruction, 
-                       OPTIQ_ExecutionInstruction_STPRestingOrder);
+                       OPTIQ_EXECUTIONINSTRUCTION_STPRESTINGORDER);
     border.setInteger (DarkExecutionInstruction, 
-                       OPTIQ_DarkExecutionInstruction_DarkIndicator);
+                       OPTIQ_DARKEXECUTIONINSTRUCTION_DARKINDICATOR);
     border.setInteger (MiFIDIndicators, 
-                       OPTIQ_MiFIDIndicators_ExecutionAlgoIndicator);
+                       OPTIQ_MIFIDINDICATORS_EXECUTIONALGOINDICATOR);
 
     if (!gwc->sendOrder (border))
         errx  (1, "failed to send border myborder...");
@@ -216,18 +216,18 @@ int main (int argc, char** argv)
     clOrdId = time (NULL);
     sorder.setInteger (ClientOrderID, clOrdId);
     sorder.setInteger (SymbolIndex, 1110000);
-    sorder.setInteger (EMM, OPTIQ_EMM_Cash_and_Derivative_Central_Order_Book);
+    sorder.setInteger (EMM, OPTIQ_EMM_CASH_AND_DERIVATIVE_CENTRAL_ORDER_BOOK);
     sorder.setInteger (ExecutionWithinFirmShortCode, 3);
     sorder.setInteger (TradingCapacity, 
-                       OPTIQ_TradingCapacity_Dealing_on_own_account);
-    sorder.setInteger (AccountType, OPTIQ_AccountType_Client);
-    sorder.setInteger (LPRole, OPTIQ_LPRole_Retail_Liquidity_Provider);
+                       OPTIQ_TRADINGCAPACITY_DEALING_ON_OWN_ACCOUNT);
+    sorder.setInteger (AccountType, OPTIQ_ACCOUNTTYPE_CLIENT);
+    sorder.setInteger (LPRole, OPTIQ_LPROLE_RETAIL_LIQUIDITY_PROVIDER);
     sorder.setInteger (ExecutionInstruction, 
-                       OPTIQ_ExecutionInstruction_STPRestingOrder);
+                       OPTIQ_EXECUTIONINSTRUCTION_STPRESTINGORDER);
     sorder.setInteger (DarkExecutionInstruction, 
-                       OPTIQ_DarkExecutionInstruction_DarkIndicator);
+                       OPTIQ_DARKEXECUTIONINSTRUCTION_DARKINDICATOR);
     sorder.setInteger (MiFIDIndicators, 
-                       OPTIQ_MiFIDIndicators_ExecutionAlgoIndicator);
+                       OPTIQ_MIFIDINDICATORS_EXECUTIONALGOINDICATOR);
 
     if (!gwc->sendOrder (sorder))
         errx  (1, "failed to send sorder myborder...");
