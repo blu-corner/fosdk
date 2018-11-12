@@ -25,12 +25,12 @@
 %rename(Cdr) neueda::cdr;
 %rename(Properties) neueda::properties;
 %rename(Logger) neueda::logger;
+%rename(Codec) neueda::codec;
 
-%import(module="Config") "properties.h"
-%import(module="Log") "logger.h"
-%import(module="CommonDataRepresentation") "cdr.h"
-%import(module="Codecs") "codec.h"
-%import(module="Codecs") "../../ext/codec/src/bindings/codecBuffer.h"
+%import(module="properties") "properties.h"
+%import(module="logger") "logger.h"
+%import(module="cdr") "cdr.h"
+%import(module="codec") "codec.h"
 
 
 // directors
