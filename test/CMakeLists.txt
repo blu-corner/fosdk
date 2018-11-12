@@ -45,6 +45,7 @@ target_link_libraries(unittest
   gmock
   pthread
   )
+add_dependencies(unittest googletest)
 
 add_test(NAME unittest
   COMMAND unittest
