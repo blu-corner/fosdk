@@ -1,0 +1,33 @@
+language: cpp
+compiler: gcc
+os:
+    - linux
+sudo: required
+
+branches:
+    only:
+        - master
+
+addons:
+    sonarcloud:
+        organization: "neueda-blu-corner"
+
+before_install:
+    - sudo apt-get update
+    - sudo apt-get install -y vera++ cppcheck valgrind gcovr unzip
+
+before_script:
+    - wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+    - unzip build-wrapper-linux-x86.zip
+    - export PATH=$PATH:`pwd`/build-wrapper-linux-x86
+    - mkdir build
+    - cd build
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/install/lib
+
+script:
+    - cmake -DCOVERAGE=ON -DTESTS=ON ../
+    - build-wrapper-linux-x86-64 --out-dir ./Linux-output make install
+    - ./install/bin/unittest
+    - gcov `find ./src/ ./test -regextype posix-egrep -regex ".*\\.(o)"`
+    - cd ../
+    - sonar-scanner
