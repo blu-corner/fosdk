@@ -366,12 +366,12 @@ gwcFix::handleTcpMsg (cdr& msg)
         mMessageCbs->onAdmin (seqnum, msg);
     else if (msgType == FixTestRequest)
         handleTestRequestMsg (seqnum, msg);
-    // else if (msgType == FixResendRequest)
-    //     handleResendRequestMsg (seqnum, msg);
+    else if (msgType == FixResendRequest)
+        handleResendRequestMsg (seqnum, msg);
     else if (msgType == FixReject)
         handleRejectMsg (seqnum, msg);
-    // else if (msgType == FixSequenceReset)
-    //     handleSequenceResetMsg (seqnum, msg);
+    else if (msgType == FixSequenceReset)
+        handleSequenceResetMsg (seqnum, msg);
     else if (msgType == FixLogout)
         handleLogoutMsg (seqnum, msg);
     else if (msgType == FixExecutionReport)
@@ -413,6 +413,40 @@ gwcFix::handleTestRequestMsg (int64_t seqno, cdr& msg)
     tr.setString (MsgType, FixTestRequest);
     tr.setString (TestReqID, testreqid);
     sendMsg (tr);
+}
+
+void
+gwcFix::handleResendRequestMsg (int64_t seqno, cdr& msg)
+{    
+    mMessageCbs->onAdmin (seqno, msg);
+
+    string testreqid;
+    if (!msg.getString (TestReqID, testreqid))
+        return;
+
+    /* we won't replay old messages so lets reset seqno */
+    cdr sr;
+    sr.setString (MsgType, FixSequenceReset);
+    sr.setInteger (NewSeqNo, mSeqnums.mOutbound + 1);
+    sendMsg (sr);
+}
+
+void
+gwcFix::handleSequenceResetMsg (int64_t seqno, cdr& msg)
+{    
+    mMessageCbs->onAdmin (seqno, msg);
+
+    int64_t newseqno;
+    if (!msg.getInteger (NewSeqNo, newseqno))
+        return;
+
+    lock ();
+
+    mSeqnums.mInbound = newseqno;
+    sbfCacheFile_write (mCacheItem, &mSeqnums);
+    sbfCacheFile_flush (mCacheFile);
+
+    unlock ();
 }
 
 void
@@ -657,6 +691,7 @@ gwcFix::stop ()
     if (mState != GWC_CONNECTOR_READY) // not logged in
     {
         reset ();
+        cdr logoffResponse;
         mSessionsCbs->onLoggedOff (0, logoffResponse);
         unlock ();
         return true;
