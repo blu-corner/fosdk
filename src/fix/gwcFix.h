@@ -108,6 +108,8 @@ private:
     void handleTcpMsg (cdr& msg);
     void handleLogoutMsg (int64_t seqno, cdr& msg);
     void handleTestRequestMsg (int64_t seqno, cdr& msg);
+    void handleResendRequestMsg (int64_t seqno, cdr& msg);
+    void handleSequenceResetMsg (int64_t seqno, cdr& msg);
     // void handleTechnicalRejectMsg (cdr& msg);
     // void handleAckMsg (int64_t seqno, cdr& msg);
     void handleExecutionReportMsg (int64_t seqno, cdr& msg); 
