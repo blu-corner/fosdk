@@ -25,7 +25,10 @@ extern const string FixLogout;
 extern const string FixExecutionReport;
 extern const string FixOrderCancelReject;
 extern const string FixLogon;
+extern const string FixNewOrderSingle;
 extern const string FixBusinessMessageReject;
+extern const string FixOrderCancelRequest;
+extern const string FixOrderCancelReplaceRequest;
 
 class gwcFix;
 
@@ -110,11 +113,8 @@ private:
     void handleTestRequestMsg (int64_t seqno, cdr& msg);
     void handleResendRequestMsg (int64_t seqno, cdr& msg);
     void handleSequenceResetMsg (int64_t seqno, cdr& msg);
-    // void handleTechnicalRejectMsg (cdr& msg);
-    // void handleAckMsg (int64_t seqno, cdr& msg);
     void handleExecutionReportMsg (int64_t seqno, cdr& msg); 
     void handleOrderCancelRejectMsg (int64_t seqno, cdr& msg); 
-    // void handleKillMsg (int64_t seqno, cdr& msg);
     void handleBusinessRejectMsg (int64_t seqno, cdr& msg);
     void handleRejectMsg (int64_t seqno, cdr& msg);
 
