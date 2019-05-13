@@ -14,6 +14,9 @@ extern const string FixLogout = "5";
 extern const string FixExecutionReport = "8";
 extern const string FixOrderCancelReject = "9";
 extern const string FixLogon = "A";
+extern const string FixNewOrderSingle = "D";
+extern const string FixOrderCancelRequest = "F";
+extern const string FixOrderCancelReplaceRequest = "G";
 extern const string FixBusinessMessageReject = "j";
 
 gwcFixTcpConnectionDelegate::gwcFixTcpConnectionDelegate (gwcFix* gwc)
@@ -58,7 +61,7 @@ gwcFix::gwcFix (neueda::logger* log) :
     mSenderCompID (""),
     mTargetCompID (""),
     mDataDictionary (""),
-    mHeartBtInt (2),
+    mHeartBtInt (30),
     mResetSeqNumFlag (false),
     mDispatching (false),
     mHb (NULL),
@@ -118,6 +121,7 @@ gwcFix::onTcpConnectionReady ()
 
     cdr d;
     d.setString (MsgType, "A");
+    d.setInteger (ResetSeqNumFlag, mResetSeqNumFlag ? 'Y' : 'N');
     setHeader (d);
 
     mSessionsCbs->onLoggingOn (d);
@@ -130,6 +134,14 @@ gwcFix::onTcpConnectionReady ()
     }
 
     mTcpConnection->send (space, used);
+
+    lock ();
+
+    mSeqnums.mOutbound++;
+    sbfCacheFile_write (mCacheItem, &mSeqnums);
+    sbfCacheFile_flush (mCacheFile);
+
+    unlock ();
 }
 
 void 
@@ -283,7 +295,6 @@ gwcFix::setHeader (cdr& d)
     d.setInteger (MsgSeqNum, mSeqnums.mOutbound);
     d.setInteger (EncryptMethod, 0);
     d.setInteger (HeartBtInt, mHeartBtInt);
-    d.setInteger (ResetSeqNumFlag, mResetSeqNumFlag ? 'Y' : 'N');
 
     cdrDateTime dt;
     getSendingTime (dt);
@@ -293,13 +304,6 @@ gwcFix::setHeader (cdr& d)
 void 
 gwcFix::handleTcpMsg (cdr& msg)
 {
-    int64_t templateId = 0;
-
-    msg.getInteger (TemplateId, templateId);
-
-    // mLog->info ("msg in..");
-    // mLog->info ("%s", msg.toString ().c_str ());
-
     /* any message counts as a hb */
     mSeenHb = true;
 
@@ -310,10 +314,11 @@ gwcFix::handleTcpMsg (cdr& msg)
 
     if (mState == GWC_CONNECTOR_CONNECTED)
     {
-        if (msgType != FixLogon && msgType != FixLogout)
+        if (msgType != FixLogon  && 
+            msgType != FixLogout &&
+            msgType != FixResendRequest)
             return error ("invalid response after logon");
 
-        mMessageCbs->onAdmin (seqnum, msg);
         if (msgType == FixLogon)
         {
             mState = GWC_CONNECTOR_READY;
@@ -321,41 +326,69 @@ gwcFix::handleTcpMsg (cdr& msg)
                                    mQueue,
                                    gwcFix::onHbTimeout,
                                    this,
-                                   mHeartBtInt); /* Hb is 1sec for SBE */
+                                   mHeartBtInt);
 
-            lock ();
-            mSeqnums.mInbound = seqnum;
+            bool reset = false;
 
-            sbfCacheFile_write (mCacheItem, &mSeqnums);
-            sbfCacheFile_flush (mCacheFile);
+            string resetseqno;
+            if (msg.getString (ResetSeqNumFlag, resetseqno))
+            {
+                if (!utils_parseBool (resetseqno, reset))
+                {
+                    mLog->err ("failed to parse resetseqnumflag to bool");
+                    return error ("invalid logon msg");
+                }
+            }
 
-            unlock ();
+            if (reset)
+            {
+                lock ();
 
-            mSessionsCbs->onLoggedOn (0, msg);
+                mSeqnums.mInbound = seqnum;
+
+                sbfCacheFile_write (mCacheItem, &mSeqnums);
+                sbfCacheFile_flush (mCacheFile);
+
+                unlock ();
+            }
+            mSessionsCbs->onLoggedOn (seqnum, msg);
             loggedOnEvent ();         
         }
-        else /* logon reject */
+        else if (msgType == FixLogout) /* logon reject */
         {
-            /* pacth up outbound and inbound seqno's so that the 
-               reconnect will be ok */
-            lock ();
-
-            mSeqnums.mInbound = seqnum;
-
-            sbfCacheFile_write (mCacheItem, &mSeqnums);
-            sbfCacheFile_flush (mCacheFile);
-
-            unlock ();
-
             error ("logon rejected");
+            return;
         }
-
-        return;         
     }
 
     lock ();
 
-    mSeqnums.mInbound = seqnum;
+    if (seqnum > mSeqnums.mInbound)
+    {
+        mLog->warn ("gap detected");
+
+        cdr resend;
+        resend.setString (MsgType, FixResendRequest);
+        resend.setInteger (BeginSeqNo, mSeqnums.mInbound);
+        resend.setInteger (EndSeqNo, 0);
+
+        unlock ();
+
+        sendMsg (resend);
+        return;
+    }
+    else if (seqnum < mSeqnums.mInbound)
+    {
+        stringstream err;
+        err << "sequence number too low expecting: " << mSeqnums.mInbound;
+        error (err.str ());
+
+        unlock ();
+
+        return;
+    }
+
+    mSeqnums.mInbound = seqnum + 1;
 
     sbfCacheFile_write (mCacheItem, &mSeqnums);
     sbfCacheFile_flush (mCacheFile);
@@ -380,6 +413,10 @@ gwcFix::handleTcpMsg (cdr& msg)
         handleOrderCancelRejectMsg (seqnum, msg);
     else if (msgType == FixBusinessMessageReject)
         handleBusinessRejectMsg (seqnum, msg);
+    else if (msgType == FixLogon  &&
+             msgType == FixLogout &&
+             msgType == FixResendRequest)
+        mMessageCbs->onAdmin (seqnum, msg);
     else
         mMessageCbs->onMsg (seqnum, msg);
 }
@@ -460,24 +497,7 @@ gwcFix::handleBusinessRejectMsg (int64_t seqno, cdr& msg)
 {    
     mMessageCbs->onAdmin (seqno, msg);
 }
-//
-// void
-// gwcFix::handleAckMsg (int64_t seqno, cdr& msg)
-// {
-//     #<{(| look at AckType field 
-//        OPTIQ_ACKTYPE_NEW_ORDER_ACK
-//        OPTIQ_ACKTYPE_REPLACE_ACK
-//     |)}>#
-//
-//     int64_t acktype;
-//     msg.getInteger (AckType, acktype);
-//
-//     if (acktype == OPTIQ_ACKTYPE_NEW_ORDER_ACK)
-//         mMessageCbs->onOrderAck (seqno, msg);
-//     else if (acktype == OPTIQ_ACKTYPE_REPLACE_ACK)
-//         mMessageCbs->onModifyAck (seqno, msg);
-// }
-//
+
 void
 gwcFix::handleExecutionReportMsg (int64_t seqno, cdr& msg)
 {
@@ -487,16 +507,19 @@ gwcFix::handleExecutionReportMsg (int64_t seqno, cdr& msg)
     if (!msg.getString (ExecTransType, exectranstype))
     {
         // invalid execution report received
+        mMessageCbs->onMsg (seqno, msg);
         return;
     }   
 
     if (exectranstype != "0")
         // restatement
+        mMessageCbs->onMsg (seqno, msg);
         return;
 
     if (!msg.getString (ExecType, exectype))
     {
         // invalid execution report received
+        mMessageCbs->onMsg (seqno, msg);
         return;
     }   
 
@@ -521,6 +544,7 @@ gwcFix::handleOrderCancelRejectMsg (int64_t seqno, cdr& msg)
     if (!msg.getString (CxlRejResponseTo, cxlresp))
     {
         // invalid cancel reject msg
+        mMessageCbs->onMsg (seqno, msg);
         return;
     }
 
@@ -711,104 +735,109 @@ gwcFix::stop ()
 bool
 gwcFix::sendOrder (gwcOrder& order)
 {
-    // if (order.mPriceSet)
-    //     order.setInteger (OrderPx, order.mPrice);
-    //
-    // if (order.mQtySet)
-    //     order.setInteger (OrderQty, order.mQty);
-    //
-    // if (order.mOrderTypeSet)
-    // {
-    //     switch (order.mOrderType)
-    //     {
-    //     case GWC_ORDER_TYPE_MARKET:
-    //         order.setInteger (OrderType, OPTIQ_ORDERTYPE_MARKET_PEG);
-    //         break;
-    //     case GWC_ORDER_TYPE_LIMIT:
-    //         order.setInteger (OrderType, OPTIQ_ORDERTYPE_LIMIT);
-    //         break;
-    //     case GWC_ORDER_TYPE_STOP:
-    //         order.setInteger (
-    //                        OrderType, 
-    //                        OPTIQ_ORDERTYPE_STOP_MARKET_OR_STOP_MARKET_ON_QUOTE);
-    //         break;
-    //     case GWC_ORDER_TYPE_STOP_LIMIT:
-    //         order.setInteger (
-    //                        OrderType,
-    //                        OPTIQ_ORDERTYPE_STOP_LIMIT_OR_STOP_LIMIT_ON_QUOTE);
-    //         break;
-    //     default:
-    //         mLog->err ("invalid order type");
-    //         return false;
-    //     }
-    // }
-    //
-    // if (order.mSideSet)
-    // {
-    //     switch (order.mSide)
-    //     {
-    //     case GWC_SIDE_BUY:
-    //         order.setInteger (OrderSide, OPTIQ_SIDE_BUY);
-    //         break;
-    //     case GWC_SIDE_SELL:
-    //         order.setInteger (OrderSide, OPTIQ_SIDE_SELL);
-    //         break;
-    //     default:
-    //         order.setInteger (OrderSide, OPTIQ_SIDE_SELL); 
-    //         break;
-    //     }
-    // }
-    //
-    // if (order.mTifSet)
-    // {
-    //     switch (order.mTif)
-    //     {
-    //     case GWC_TIF_DAY:
-    //         order.setInteger (TimeInForce, OPTIQ_TIMEINFORCE_DAY);
-    //         break;
-    //     case GWC_TIF_IOC:
-    //         order.setInteger (TimeInForce, 
-    //                           OPTIQ_TIMEINFORCE_IMMEDIATE_OR_CANCEL);
-    //         break;
-    //     case GWC_TIF_FOK:
-    //         order.setInteger (TimeInForce, OPTIQ_TIMEINFORCE_FILL_OR_KILL);
-    //         break;
-    //     case GWC_TIF_GTD:
-    //         order.setInteger (TimeInForce, OPTIQ_TIMEINFORCE_GOOD_TILL_DATE);
-    //         break;
-    //     default:
-    //         break;    
-    //     }
-    // }
-    //
-    // // downgrade to cdr so compiler picks correct method
-    // cdr& o = order;
-    // return sendOrder (o);
-    return true;
+    if (order.mPriceSet)
+        order.setInteger (Price, order.mPrice);
+
+    if (order.mQtySet)
+        order.setInteger (OrderQty, order.mQty);
+
+    if (order.mOrderTypeSet)
+    {
+        switch (order.mOrderType)
+        {
+        case GWC_ORDER_TYPE_MARKET:
+        case GWC_ORDER_TYPE_LIMIT:
+        case GWC_ORDER_TYPE_STOP:
+        case GWC_ORDER_TYPE_STOP_LIMIT:
+        case GWC_ORDER_TYPE_MARKET_ON_CLOSE:
+        case GWC_ORDER_TYPE_WITH_OR_WITHOUT:
+        case GWC_ORDER_TYPE_LIMIT_OR_BETTER:
+        case GWC_ORDER_TYPE_LIMIT_WITH_OR_WITHOUT:
+        case GWC_ORDER_TYPE_ON_BASIS:
+        case GWC_ORDER_TYPE_ON_CLOSE:
+        case GWC_ORDER_TYPE_LIMIT_ON_CLOSE:
+        case GWC_ORDER_TYPE_FOREX:
+        case GWC_ORDER_TYPE_PREVIOUSLY_QUOTED:
+        case GWC_ORDER_TYPE_PREVIOUSLY_INDICATED:
+        case GWC_ORDER_TYPE_PEGGED:
+            order.setInteger (OrdType, order.mOrderType);
+        default:
+            mLog->err ("invalid ordtype");
+            return false;
+        }
+    }
+
+    if (order.mSideSet)
+    {
+        switch (order.mSide)
+        {
+        case GWC_SIDE_BUY:
+        case GWC_SIDE_SELL:
+        case GWC_SIDE_BUY_MINUS:
+        case GWC_SIDE_SELL_PLUS:
+        case GWC_SIDE_SELL_SHORT:
+        case GWC_SIDE_SELL_SHORT_EXEMPT:
+        case GWC_SIDE_UNDISCLOSED:
+        case GWC_SIDE_CROSS:
+        case GWC_SIDE_CROSS_SHORT:
+        case GWC_SIDE_CROSS_SHORT_EXEMPT:
+        case GWC_SIDE_AS_DEFINED:
+        case GWC_SIDE_OPPOSITE:
+        case GWC_SIDE_SUBSCRIBE:
+        case GWC_SIDE_REDEEM:
+        case GWC_SIDE_LEND:
+        case GWC_SIDE_BORROW:
+        case GWC_SIDE_SELL_UNDISCLOSED:
+            order.setInteger (Side, order.mSide);
+            break;
+        default:
+            mLog->err ("invalid side");
+            return false;
+        }
+    }
+
+    if (order.mTifSet)
+    {
+        switch (order.mTif)
+        {
+        case GWC_TIF_DAY:
+        case GWC_TIF_GTC:
+        case GWC_TIF_OPG:
+        case GWC_TIF_IOC:
+        case GWC_TIF_FOK:
+        case GWC_TIF_GTX:
+        case GWC_TIF_GTD:
+        case GWC_TIF_ATC:
+            order.setInteger (TimeInForce, order.mTif);
+            break;
+        default:
+            mLog->err ("invalid timeinforce");
+            return false;
+        }
+    }
+
+    return sendOrder ((cdr&)order);
 }
 
 bool 
 gwcFix::sendOrder (cdr& order)
 {
-    // order.setInteger (TemplateId, FixNewOrderTemplateId);
-    // return sendMsg (order);
-    return true;
+    order.setString (MsgType, FixNewOrderSingle);
+    return sendMsg (order);
 }
 
 bool 
 gwcFix::sendCancel (cdr& cancel)
 {
-    // cancel.setInteger (TemplateId, FixCancelRequestTemplateId);
-    // return sendMsg (cancel);
-    return true;
+    cancel.setString (MsgType, FixOrderCancelRequest);
+    return sendMsg (cancel);
 }
 
 bool 
 gwcFix::sendModify (cdr& modify)
 {
-    // modify.setInteger (TemplateId, FixCancelReplaceTemplateId);
-    // return sendMsg (modify);
-    return true;
+    modify.setString (MsgType, FixOrderCancelReplaceRequest);
+    return sendMsg (modify);
 }
 
 bool 
@@ -826,21 +855,12 @@ gwcFix::sendMsg (cdr& msg)
         return false;
     }
 
-    mSeqnums.mOutbound++;
-    sbfCacheFile_write (mCacheItem, &mSeqnums);
-    sbfCacheFile_flush (mCacheFile);
-
     setHeader (msg);
 
     if (mCodec.encode (msg, space, sizeof space, used) != GW_CODEC_SUCCESS)
     {
         mLog->err ("failed to construct logon message [%s]",
                    mCodec.getLastError ().c_str ());
-
-        // revert seqno increment
-        mSeqnums.mOutbound--;
-        sbfCacheFile_write (mCacheItem, &mSeqnums);
-        sbfCacheFile_flush (mCacheFile);
 
         unlock ();
         return false;
@@ -850,6 +870,10 @@ gwcFix::sendMsg (cdr& msg)
     mLog->info ("%s", msg.toString ().c_str ());
 
     mTcpConnection->send (space, used);
+
+    mSeqnums.mOutbound++;
+    sbfCacheFile_write (mCacheItem, &mSeqnums);
+    sbfCacheFile_flush (mCacheFile);
 
     unlock ();
     return true;
@@ -878,4 +902,3 @@ gwcFix::sendRaw (void* data, size_t len)
     unlock ();
     return true;
 }
-
