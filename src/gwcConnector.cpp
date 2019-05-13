@@ -21,7 +21,7 @@ gwcConnectorFactory::get (logger* log, const std::string& type, const neueda::pr
         log->err ("%s", dl_error ());
         log->fatal ("unable to load connector [%s]", type.c_str ());
 
-        return NULL
+        return NULL;
     }
 
     gwcConnector::getConnector g = (gwcConnector::getConnector)dl_symbol (handle, "getConnector");
