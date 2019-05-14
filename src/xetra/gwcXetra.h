@@ -55,8 +55,13 @@ public:
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
+
+    virtual bool sendCancel (gwcOrder& cancel);
     virtual bool sendCancel (cdr& cancel);
+
+    virtual bool sendModify (gwcOrder& modify);
     virtual bool sendModify (cdr& modify);
+
     virtual bool sendMsg (cdr& msg);
     virtual bool sendRaw (void* data, size_t len);
 
@@ -79,6 +84,7 @@ private:
     void error (const string& err);
     void sendRetransRequest ();
     void updateApplMsgId (string& sMsgId);
+    bool mapOrderFields (gwcOrder& gwc);
 
     // handle state
     void onTcpConnectionReady ();
