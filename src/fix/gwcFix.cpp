@@ -120,7 +120,7 @@ gwcFix::onTcpConnectionReady ()
     size_t used = 0;
 
     cdr d;
-    d.setString (MsgType, "A");
+    d.setString (MsgType, FixLogon);
     d.setInteger (ResetSeqNumFlag, mResetSeqNumFlag ? 'Y' : 'N');
     setHeader (d);
 
@@ -283,7 +283,7 @@ gwcFix::getSendingTime (cdrDateTime& dt)
     dt.mSecond = tmp->tm_sec;
 
     if (gettimeofday (&tv, NULL) == 0)
-        dt.mMinute = (int)tv.tv_usec / 1000;
+        dt.mMillisecond = (int)tv.tv_usec / 1000;
 }
 
 void
@@ -304,6 +304,8 @@ gwcFix::setHeader (cdr& d)
 void 
 gwcFix::handleTcpMsg (cdr& msg)
 {
+    mLog->info ("msg in..");
+    mLog->info ("%s", msg.toString ().c_str ());
     /* any message counts as a hb */
     mSeenHb = true;
 
@@ -351,6 +353,7 @@ gwcFix::handleTcpMsg (cdr& msg)
 
                 unlock ();
             }
+
             mSessionsCbs->onLoggedOn (seqnum, msg);
             loggedOnEvent ();         
         }
@@ -361,11 +364,20 @@ gwcFix::handleTcpMsg (cdr& msg)
         }
     }
 
+    // skip seqnum checking on sequence reset
+    if (msgType == FixSequenceReset)
+    {
+        handleSequenceResetMsg (seqnum, msg);
+        return;
+    }
+
     lock ();
 
     if (seqnum > mSeqnums.mInbound)
     {
-        mLog->warn ("gap detected");
+        stringstream err;
+        err << "gap detected, got " << seqnum << " expected: " << mSeqnums.mInbound << endl;
+        mLog->warn (err.str ().c_str ());
 
         cdr resend;
         resend.setString (MsgType, FixResendRequest);
@@ -403,8 +415,6 @@ gwcFix::handleTcpMsg (cdr& msg)
         handleResendRequestMsg (seqnum, msg);
     else if (msgType == FixReject)
         handleRejectMsg (seqnum, msg);
-    else if (msgType == FixSequenceReset)
-        handleSequenceResetMsg (seqnum, msg);
     else if (msgType == FixLogout)
         handleLogoutMsg (seqnum, msg);
     else if (msgType == FixExecutionReport)
@@ -434,6 +444,7 @@ gwcFix::handleLogoutMsg (int64_t seqno, cdr& msg)
     }
     reset ();
     mSessionsCbs->onLoggedOff (seqno, msg);
+    loggedOffEvent ();
 }
 
 void
@@ -504,17 +515,15 @@ gwcFix::handleExecutionReportMsg (int64_t seqno, cdr& msg)
     string exectranstype;
     string exectype;
 
-    if (!msg.getString (ExecTransType, exectranstype))
+    if (msg.getString (ExecTransType, exectranstype))
     {
-        // invalid execution report received
-        mMessageCbs->onMsg (seqno, msg);
-        return;
-    }   
-
-    if (exectranstype != "0")
-        // restatement
-        mMessageCbs->onMsg (seqno, msg);
-        return;
+        if (exectranstype != "0")
+        {
+            // restatement
+            mMessageCbs->onMsg (seqno, msg);
+            return;
+        }
+    }
 
     if (!msg.getString (ExecType, exectype))
     {
@@ -717,6 +726,7 @@ gwcFix::stop ()
         reset ();
         cdr logoffResponse;
         mSessionsCbs->onLoggedOff (0, logoffResponse);
+        loggedOffEvent ();
         unlock ();
         return true;
     }
@@ -733,7 +743,7 @@ gwcFix::stop ()
 }
 
 bool
-gwcFix::sendOrder (gwcOrder& order)
+gwcFix::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setInteger (Price, order.mPrice);
@@ -760,10 +770,10 @@ gwcFix::sendOrder (gwcOrder& order)
         case GWC_ORDER_TYPE_PREVIOUSLY_QUOTED:
         case GWC_ORDER_TYPE_PREVIOUSLY_INDICATED:
         case GWC_ORDER_TYPE_PEGGED:
-            order.setInteger (OrdType, order.mOrderType);
+            order.setString (OrdType, "%c", order.mOrderType);
+            break;
         default:
-            mLog->err ("invalid ordtype");
-            return false;
+            break;
         }
     }
 
@@ -788,11 +798,10 @@ gwcFix::sendOrder (gwcOrder& order)
         case GWC_SIDE_LEND:
         case GWC_SIDE_BORROW:
         case GWC_SIDE_SELL_UNDISCLOSED:
-            order.setInteger (Side, order.mSide);
+            order.setString (Side, "%c", order.mSide);
             break;
         default:
-            mLog->err ("invalid side");
-            return false;
+            break;
         }
     }
 
@@ -808,13 +817,21 @@ gwcFix::sendOrder (gwcOrder& order)
         case GWC_TIF_GTX:
         case GWC_TIF_GTD:
         case GWC_TIF_ATC:
-            order.setInteger (TimeInForce, order.mTif);
+            order.setString (TimeInForce, "%c", order.mTif);
             break;
         default:
-            mLog->err ("invalid timeinforce");
-            return false;
+            break;
         }
     }
+
+    return true;
+}
+
+bool
+gwcFix::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
 
     return sendOrder ((cdr&)order);
 }
@@ -826,11 +843,29 @@ gwcFix::sendOrder (cdr& order)
     return sendMsg (order);
 }
 
+bool
+gwcFix::sendCancel (gwcOrder& cancel)
+{
+    if (!mapOrderFields (cancel))
+        return false;
+
+    return sendCancel ((cdr&)cancel);
+}
+
 bool 
 gwcFix::sendCancel (cdr& cancel)
 {
     cancel.setString (MsgType, FixOrderCancelRequest);
     return sendMsg (cancel);
+}
+
+bool
+gwcFix::sendModify (gwcOrder& modify)
+{
+    if (!mapOrderFields (modify))
+        return false;
+
+    return sendModify ((cdr&)modify);
 }
 
 bool 

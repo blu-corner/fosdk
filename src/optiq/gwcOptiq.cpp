@@ -396,6 +396,7 @@ gwcOptiq::handleLogoffResponse (cdr& msg)
     }
     reset ();
     mSessionsCbs->onLoggedOff (0, msg);
+    loggedOffEvent ();
 }
 
 void
@@ -602,6 +603,7 @@ gwcOptiq::stop ()
         cdr logoffResponse;
         logoffResponse.setInteger (TemplateId, OptiqLogoutTemplateId);
         mSessionsCbs->onLoggedOff (0, logoffResponse);
+        loggedOffEvent ();
         unlock ();
         return true;
     }

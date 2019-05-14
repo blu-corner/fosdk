@@ -6,6 +6,29 @@
 using namespace std;
 using namespace neueda;
 
+void
+getTime (cdrDateTime& dt)
+{
+    time_t t;
+    struct tm* tmp;
+    struct timeval tv;
+
+    t = time(NULL);
+    tmp = gmtime (&t);
+
+    dt.mYear = tmp->tm_year;
+    dt.mMonth = tmp->tm_mon;
+    dt.mDay = tmp->tm_mday;
+
+    dt.mHour = tmp->tm_hour;
+    dt.mMinute = tmp->tm_min;
+    dt.mSecond = tmp->tm_sec;
+
+    if (gettimeofday (&tv, NULL) == 0)
+        dt.mMillisecond = (int)tv.tv_usec / 1000;
+}
+
+
 class sessionCallbacks : public gwcSessionCallbacks
 {
 public:
@@ -65,34 +88,25 @@ public:
         mLog->info ("onOrderAck msg...");
         mLog->info ("%s", msg.toString ().c_str ());
 
-        string orderId;
-        msg.getString (OrderID, orderId);
-        /* send modify */
-        cdr modify;
-        modify.setString (OriginalClientOrderID, "myorder");
-        modify.setString (ClientOrderID, "myorder1");
-        modify.setString (OrderID, orderId);
-        modify.setInteger (InstrumentID, 133215); // VOD.L
-        modify.setInteger (OrderQty, 2000);
-        modify.setInteger (OrderType, 2);
-        modify.setDouble (LimitPrice, 1234.56);
-        modify.setInteger (Side, 1);
+        string origcloid;
+        msg.getString (ClOrdID, origcloid);
 
-        modify.setString (Account, "account");
-        modify.setInteger (ExpireDateTime, 0);
-        modify.setInteger (DisplayQty, 0);
-        modify.setDouble (StopPrice, 0.0);
-        modify.setInteger (PassiveOnlyOrder, 0);
-        modify.setInteger (ClientID, 1234);
-        modify.setInteger (MinimumQuantity, 0);
-        modify.setInteger (PassiveOnlyOrder, 0);
-        modify.setInteger (ReservedField1, 0);
-        modify.setInteger (ReservedField2, 0);
-        modify.setInteger (ReservedField3, 0);
-        modify.setInteger (ReservedField4, 0);
-    
+        /* send modify */
+        gwcOrder modify;
+        modify.setString (OrigClOrdID, origcloid);
+        modify.setString (ClOrdID, "B12345678");
+        modify.setInteger (AccountType, 1);
+        modify.setString (Symbol, "CSCO");
+        modify.setSide (GWC_SIDE_BUY);
+        modify.setQty (50);
+        modify.setOrderType (GWC_ORDER_TYPE_LIMIT);
+
+        cdrDateTime tt;
+        getTime (tt);
+        modify.setDateTime (TransactTime, tt);
+
         if (!mGwc->sendModify (modify))
-            mLog->info ("failed to send modify myorder1...");
+            mLog->info ("failed to send modify ...");
     }
 
     virtual void onOrderRejected (uint64_t seqno, const cdr& msg)
@@ -118,33 +132,32 @@ public:
         mLog->info ("onModifyAck msg...");
         mLog->info ("%s", msg.toString ().c_str ());
 
-        // cancel order
-        string orderId;
-        msg.getString (OrderID, orderId);
-        cdr cancel;
-        cancel.setString (OriginalClientOrderID, "myorder1");
-        cancel.setString (ClientOrderID, "myorder2");
-        cancel.setString (OrderID, orderId);
-        cancel.setInteger (InstrumentID, 133215); // VOD.L
-        cancel.setInteger (Side, 1);
-        cancel.setString (RfqID, "XXXX");
+        string origcloid;
+        msg.getString (ClOrdID, origcloid);
 
-        cancel.setInteger (ReservedField1, 0);
-        cancel.setInteger (ReservedField2, 0);
-    
+        gwcOrder cancel;
+        cancel.setString (OrigClOrdID, origcloid);
+        cancel.setString (ClOrdID, "C12345678");
+        cancel.setString (Symbol, "CSCO");
+        cancel.setSide (GWC_SIDE_BUY);
+
+        cdrDateTime tt;
+        getTime (tt);
+        cancel.setDateTime (TransactTime, tt);
+
         if (!mGwc->sendCancel (cancel))
-            mLog->info ("failed to send cancel myorder1...");
+            mLog->info ("failed to send cancel ...");
     }
 
     virtual void onModifyRejected (uint64_t seqno, const cdr& msg)
     {
-        mLog->info ("oModifyRejected msg...");
+        mLog->info ("onModifyRejected msg...");
         mLog->info ("%s", msg.toString ().c_str ());
     }
 
     virtual void onCancelRejected (uint64_t seqno, const cdr& msg)
     {
-        mLog->info ("onCacnelRejected msg...");
+        mLog->info ("onCancelRejected msg...");
         mLog->info ("%s", msg.toString ().c_str ());
     }
 
@@ -206,42 +219,29 @@ int main (int argc, char** argv)
     gwc->waitForLogon ();
  
     /* send order */
-    // gwcOrder order;
-    // order.setPrice (1234.45);
-    // order.setQty (1000);
-    // order.setTif (GWC_TIF_DAY);
-    // order.setSide (GWC_SIDE_BUY);
-    // order.setOrderType (GWC_ORDER_TYPE_LIMIT);
-    // order.setString (ClientOrderID, "myorder");
-    // order.setInteger (InstrumentID, 133215); // VOD.L
-    // order.setInteger (AutoCancel, 1);
-    //
-    // order.setString (TraderID, "TX1");
-    // order.setString (Account, "account");
-    // order.setInteger (ClearingAccount, 1);
-    // order.setInteger (FXMiFIDFlags, 0);
-    // order.setInteger (PartyRoleQualifiers, 0);
-    // order.setInteger (ExpireDateTime, 0);
-    // order.setInteger (DisplayQty, 0);
-    // order.setInteger (Capacity, 1);
-    // order.setInteger (OrderSubType, 0);
-    // order.setInteger (Anonymity, 0);
-    // order.setDouble (StopPrice, 0.0);
-    // order.setInteger (PassiveOnlyOrder, 0);
-    // order.setInteger (ClientID, 1234);
-    // order.setInteger (InvestmentDecisionMaker, 0);
-    // order.setInteger (MinimumQuantity, 0);
-    // order.setInteger (ExecutingTrader, 7676);
-    //
-    // if (!gwc->sendOrder (order))
-    //     errx  (1, "failed to send order myorder...");
-    //
-    // sleep (5);
-    // gwc->stop ();
-    //
-    sleep (10);
+    gwcOrder order;
+    order.setString (ClOrdID, "A12345678");
+    order.setInteger (AccountType, 1);
+    order.setString (Symbol, "CSCO");
+    order.setSide (GWC_SIDE_BUY);
+    order.setQty (100);
+    order.setOrderType (GWC_ORDER_TYPE_LIMIT);
+    order.setString (ReceivedDeptID, "T");
+
+    cdrDateTime tt;
+    getTime (tt);
+    order.setDateTime (TransactTime, tt);
+
+    log->info ("sending new order");
+    if (!gwc->sendOrder (order))
+        log->info ("failed to send order ...");
+
+    sleep (5);
     log->info ("destroying connector");
     gwc->stop ();
+
+    log->info ("waiting for logoff...");
+    gwc->waitForLogoff ();
 
     return 0;
 }

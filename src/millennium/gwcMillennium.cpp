@@ -613,6 +613,7 @@ gwcMillennium<CodecT>::handleRealTimeMsg (cdr& msg)
         }
         reset ();
         mSessionsCbs->onLoggedOff (0, msg);
+        loggedOffEvent ();
     }
     else if (mType == GW_MILLENNIUM_HEARTBEAT)
     {
@@ -986,6 +987,7 @@ gwcMillennium<CodecT>::stop ()
         cdr dlogoff;
         dlogoff.setString (MessageType, GW_MILLENNIUM_LOGOUT);
         mSessionsCbs->onLoggedOff (0, dlogoff);
+        loggedOffEvent ();
         return true;
     }
  

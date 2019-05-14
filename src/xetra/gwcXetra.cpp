@@ -510,6 +510,7 @@ gwcXetra::handleLogoffResponse (cdr& msg)
     }
     reset ();
     mSessionsCbs->onLoggedOff (0, msg);
+    loggedOffEvent ();
 }
 
 void
@@ -669,6 +670,7 @@ gwcXetra::stop ()
         cdr logoffResponse;
         logoffResponse.setInteger (TemplateID, 10002);
         mSessionsCbs->onLoggedOff (0, logoffResponse);
+        loggedOffEvent ();
         unlock ();
         return true;
     }
