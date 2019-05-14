@@ -686,7 +686,7 @@ gwcXetra::stop ()
 }
 
 bool
-gwcXetra::sendOrder (gwcOrder& order)
+gwcXetra::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setDouble (Price, order.mPrice);
@@ -753,9 +753,16 @@ gwcXetra::sendOrder (gwcOrder& order)
         }
     }
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+    return true;
+}
+
+bool
+gwcXetra::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+
+    return sendOrder ((cdr&)order);
 }
 
 bool 
@@ -765,6 +772,15 @@ gwcXetra::sendOrder (cdr& order)
     return sendMsg (order);
 }
 
+bool
+gwcXetra::sendCancel (gwcOrder& cancel)
+{
+    if (!mapOrderFields (cancel))
+        return false;
+
+    return sendCancel ((cdr&)cancel);
+}
+
 bool 
 gwcXetra::sendCancel (cdr& cancel)
 {
@@ -772,9 +788,19 @@ gwcXetra::sendCancel (cdr& cancel)
     return sendMsg (cancel);
 }
 
+bool
+gwcXetra::sendModify (gwcOrder& modify)
+{
+    if (!mapOrderFields (modify))
+        return false;
+
+    return sendModify ((cdr&)modify);
+}
+
 bool 
 gwcXetra::sendModify (cdr& modify)
 {
+    //TODO need to set TemplateID
     //modify.setString (MessageType, GW_XETRA_ORDER_CANCEL_REPLACE_REQUEST);
     return sendMsg (modify);
 }

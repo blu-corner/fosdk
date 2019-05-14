@@ -1008,7 +1008,7 @@ gwcMillennium<CodecT>::stop ()
 
 template <typename CodecT>
 bool
-gwcMillennium<CodecT>::sendOrder (gwcOrder& order)
+gwcMillennium<CodecT>::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setDouble (LimitPrice, order.mPrice);
@@ -1093,15 +1093,23 @@ gwcMillennium<CodecT>::sendOrder (gwcOrder& order)
             break;
         }
     }
+    return true;
+}
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+
+template <typename CodecT>
+bool
+gwcMillennium<CodecT>::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+
+    return sendOrder ((cdr&)order);
 }
 
 template <>
 bool
-gwcMillennium<osloCodec>::sendOrder (gwcOrder& order)
+gwcMillennium<osloCodec>::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setDouble (LimitPrice, order.mPrice);
@@ -1175,15 +1183,22 @@ gwcMillennium<osloCodec>::sendOrder (gwcOrder& order)
         }
     }
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+    return true;
 }
-
 
 template <>
 bool
-gwcMillennium<lseCodec>::sendOrder (gwcOrder& order)
+gwcMillennium<osloCodec>::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+
+    return sendOrder ((cdr&)order);
+}
+
+template <>
+bool
+gwcMillennium<lseCodec>::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setDouble (LimitPrice, order.mPrice);
@@ -1269,9 +1284,17 @@ gwcMillennium<lseCodec>::sendOrder (gwcOrder& order)
         }
     }
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+    return true;
+}
+
+template <>
+bool
+gwcMillennium<lseCodec>::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+
+    return sendOrder ((cdr&)order);
 }
 
 template <typename CodecT>
@@ -1284,10 +1307,30 @@ gwcMillennium<CodecT>::sendOrder (cdr& order)
 
 template <typename CodecT>
 bool 
+gwcMillennium<CodecT>::sendCancel (gwcOrder& cancel)
+{
+    if (!mapOrderFields (cancel))
+        return false;
+
+    return sendCancel ((cdr&)cancel);
+}
+
+template <typename CodecT>
+bool 
 gwcMillennium<CodecT>::sendCancel (cdr& cancel)
 {
     cancel.setString (MessageType, GW_MILLENNIUM_ORDER_CANCEL_REQUEST);
     return sendMsg (cancel);
+}
+
+template <typename CodecT>
+bool 
+gwcMillennium<CodecT>::sendModify (gwcOrder& modify)
+{
+    if (!mapOrderFields (modify))
+        return false;
+
+    return sendModify ((cdr&)modify);
 }
 
 template <typename CodecT>

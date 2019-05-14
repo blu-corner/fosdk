@@ -375,9 +375,8 @@ gwcFix::handleTcpMsg (cdr& msg)
 
     if (seqnum > mSeqnums.mInbound)
     {
-        stringstream err;
-        err << "gap detected, got " << seqnum << " expected: " << mSeqnums.mInbound << endl;
-        mLog->warn (err.str ().c_str ());
+        mLog->warn ("gap detected, got %ld expected: %ld",
+                    seqnum, mSeqnums.mInbound);
 
         cdr resend;
         resend.setString (MsgType, FixResendRequest);
