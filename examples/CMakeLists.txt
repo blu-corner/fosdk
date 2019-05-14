@@ -43,5 +43,8 @@ target_link_libraries(gwc-xetra-cdr-test gwc)
 add_executable(gwc-optiq-cdr-test "${PROJECT_SOURCE_DIR}/examples/optiq-cdr-example.cpp")
 target_link_libraries(gwc-optiq-cdr-test gwc)
 
+add_executable(gwc-bme-cdr-test "${PROJECT_SOURCE_DIR}/examples/bme-cdr-example.cpp")
+target_link_libraries(gwc-bme-cdr-test gwc)
+
 install(TARGETS gwc-lse-cdr-test gwc-lse-raw-test gwc-swx-cdr-test
-    gwc-xetra-cdr-test gwc-optiq-cdr-test RUNTIME DESTINATION bin)
+    gwc-xetra-cdr-test gwc-optiq-cdr-test gwc-bme-cdr-test RUNTIME DESTINATION bin)
