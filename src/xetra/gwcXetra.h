@@ -71,9 +71,6 @@ protected:
     sbfThread                     mThread;
 
 private:   
-    // static event callbacks 
-    static void makeGwConnecion (sbfQueueItem item, void* closure);
-
     // utility methods
     void reset ();
     void error (const string& err);
@@ -107,7 +104,6 @@ private:
 
     // members 
     sbfTcpConnectionAddress mTcpHost;
-    sbfTcpConnectionAddress mGwHost;
     bool                    mDispatching;
     sbfTimer                mHb;
     sbfTimer                mReconnectTimer;
