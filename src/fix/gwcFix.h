@@ -16,6 +16,20 @@
 using namespace std;
 using namespace neueda;
 
+extern const string FixHeartbeat;
+extern const string FixTestRequest;
+extern const string FixResendRequest;
+extern const string FixReject;
+extern const string FixSequenceReset;
+extern const string FixLogout;
+extern const string FixExecutionReport;
+extern const string FixOrderCancelReject;
+extern const string FixLogon;
+extern const string FixNewOrderSingle;
+extern const string FixBusinessMessageReject;
+extern const string FixOrderCancelRequest;
+extern const string FixOrderCancelReplaceRequest;
+
 class gwcFix;
 
 class gwcFixTcpConnectionDelegate : public SbfTcpConnectionDelegate
