@@ -690,7 +690,7 @@ gwcXetra::sendOrder (gwcOrder& order)
         order.setDouble (Price, order.mPrice);
 
     if (order.mQtySet)
-        order.setInteger (OrderQty, order.mQty);
+        order.setDouble (OrderQty, (double)order.mQty / 10000.0);
 
     if (order.mOrderTypeSet)
     {
