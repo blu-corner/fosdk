@@ -6,29 +6,6 @@
 using namespace std;
 using namespace neueda;
 
-void
-getTime (cdrDateTime& dt)
-{
-    time_t t;
-    struct tm* tmp;
-    struct timeval tv;
-
-    t = time(NULL);
-    tmp = gmtime (&t);
-
-    dt.mYear = tmp->tm_year;
-    dt.mMonth = tmp->tm_mon;
-    dt.mDay = tmp->tm_mday;
-
-    dt.mHour = tmp->tm_hour;
-    dt.mMinute = tmp->tm_min;
-    dt.mSecond = tmp->tm_sec;
-
-    if (gettimeofday (&tv, NULL) == 0)
-        dt.mMillisecond = (int)tv.tv_usec / 1000;
-}
-
-
 class sessionCallbacks : public gwcSessionCallbacks
 {
 public:
@@ -101,10 +78,6 @@ public:
         modify.setQty (50);
         modify.setOrderType (GWC_ORDER_TYPE_LIMIT);
 
-        cdrDateTime tt;
-        getTime (tt);
-        modify.setDateTime (TransactTime, tt);
-
         if (!mGwc->sendModify (modify))
             mLog->info ("failed to send modify ...");
     }
@@ -140,10 +113,6 @@ public:
         cancel.setString (ClOrdID, "C12345678");
         cancel.setString (Symbol, "CSCO");
         cancel.setSide (GWC_SIDE_BUY);
-
-        cdrDateTime tt;
-        getTime (tt);
-        cancel.setDateTime (TransactTime, tt);
 
         if (!mGwc->sendCancel (cancel))
             mLog->info ("failed to send cancel ...");
@@ -190,7 +159,13 @@ int main (int argc, char** argv)
     props.setProperty ("begin_string", "FIXT.1.1");
     props.setProperty ("sender_comp_id", "DBL");
     props.setProperty ("target_comp_id", "BME");
-    props.setProperty ("data_dictionary", "/home/colinp/dev/blu-corner/fosdk/examples/FIXT11.xml");
+
+    string dict ("FIXT11.xml");
+    string fp;
+    if (!utils_findFileInEnvPath ("CONFIG_PATH", dict, fp))
+        errx (1, "failed to find FIXT11.xml in CONFIG_PATH");
+
+    props.setProperty ("data_dictionary", fp.c_str ());
     props.setProperty ("seqno_cache", "/tmp/bme.cache");
 
     logger* log = logService::getLogger ("BME_TEST");
@@ -227,10 +202,6 @@ int main (int argc, char** argv)
     order.setQty (100);
     order.setOrderType (GWC_ORDER_TYPE_LIMIT);
     order.setString (ReceivedDeptID, "T");
-
-    cdrDateTime tt;
-    getTime (tt);
-    order.setDateTime (TransactTime, tt);
 
     log->info ("sending new order");
     if (!gwc->sendOrder (order))

@@ -16,20 +16,6 @@
 using namespace std;
 using namespace neueda;
 
-extern const string FixHeartbeat;
-extern const string FixTestRequest;
-extern const string FixResendRequest;
-extern const string FixReject;
-extern const string FixSequenceReset;
-extern const string FixLogout;
-extern const string FixExecutionReport;
-extern const string FixOrderCancelReject;
-extern const string FixLogon;
-extern const string FixNewOrderSingle;
-extern const string FixBusinessMessageReject;
-extern const string FixOrderCancelRequest;
-extern const string FixOrderCancelReplaceRequest;
-
 class gwcFix;
 
 class gwcFixTcpConnectionDelegate : public SbfTcpConnectionDelegate
@@ -58,6 +44,20 @@ struct gwcFixSeqnums
 class gwcFix : public gwcConnector
 {
     friend class gwcFixTcpConnectionDelegate;
+
+    static const string FixHeartbeat;
+    static const string FixTestRequest;
+    static const string FixResendRequest;
+    static const string FixReject;
+    static const string FixSequenceReset;
+    static const string FixLogout;
+    static const string FixExecutionReport;
+    static const string FixOrderCancelReject;
+    static const string FixLogon;
+    static const string FixNewOrderSingle;
+    static const string FixBusinessMessageReject;
+    static const string FixOrderCancelRequest;
+    static const string FixOrderCancelReplaceRequest;
     
 public:
     gwcFix (neueda::logger* log);
@@ -71,11 +71,7 @@ public:
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL)
-    {
-        /* no trader logon */
-        return false;
-    }
+    virtual bool traderLogon (string& traderId, const cdr* msg = NULL);
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
@@ -87,21 +83,21 @@ public:
     virtual bool sendRaw (void* data, size_t len);
 
 protected:
-    SbfTcpConnection*             mTcpConnection;
+    SbfTcpConnection*           mTcpConnection;
     gwcFixTcpConnectionDelegate mTcpConnectionDelegate;
 
-    sbfCacheFile                  mCacheFile;
-    sbfCacheFileItem              mCacheItem;
-    sbfMw                         mMw;
-    sbfQueue                      mQueue;
-    sbfThread                     mThread;
+    sbfCacheFile                mCacheFile;
+    sbfCacheFileItem            mCacheItem;
+    sbfMw                       mMw;
+    sbfQueue                    mQueue;
+    sbfThread                   mThread;
 
 private:   
 
     // utility methods
     void reset ();
     void error (const string& err);
-    void getSendingTime (cdrDateTime& dt);
+    void getTime (cdrDateTime& dt);
     void setHeader (cdr& d);
     bool mapOrderFields (gwcOrder& o);
 

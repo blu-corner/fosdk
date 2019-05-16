@@ -5,19 +5,19 @@
 
 #include <sstream>
 
-extern const string FixHeartbeat = "0";
-extern const string FixTestRequest = "1";
-extern const string FixResendRequest = "2";
-extern const string FixReject = "3";
-extern const string FixSequenceReset = "4";
-extern const string FixLogout = "5";
-extern const string FixExecutionReport = "8";
-extern const string FixOrderCancelReject = "9";
-extern const string FixLogon = "A";
-extern const string FixNewOrderSingle = "D";
-extern const string FixOrderCancelRequest = "F";
-extern const string FixOrderCancelReplaceRequest = "G";
-extern const string FixBusinessMessageReject = "j";
+const string gwcFix::FixHeartbeat = "0";
+const string gwcFix::FixTestRequest = "1";
+const string gwcFix::FixResendRequest = "2";
+const string gwcFix::FixReject = "3";
+const string gwcFix::FixSequenceReset = "4";
+const string gwcFix::FixLogout = "5";
+const string gwcFix::FixExecutionReport = "8";
+const string gwcFix::FixOrderCancelReject = "9";
+const string gwcFix::FixLogon = "A";
+const string gwcFix::FixNewOrderSingle = "D";
+const string gwcFix::FixOrderCancelRequest = "F";
+const string gwcFix::FixOrderCancelReplaceRequest = "G";
+const string gwcFix::FixBusinessMessageReject = "j";
 
 gwcFixTcpConnectionDelegate::gwcFixTcpConnectionDelegate (gwcFix* gwc)
     : SbfTcpConnectionDelegate (),
@@ -265,7 +265,7 @@ gwcFix::error (const string& err)
 }
 
 void
-gwcFix::getSendingTime (cdrDateTime& dt)
+gwcFix::getTime (cdrDateTime& dt)
 {
     time_t t;
     struct tm* tmp;
@@ -297,7 +297,7 @@ gwcFix::setHeader (cdr& d)
     d.setInteger (HeartBtInt, mHeartBtInt);
 
     cdrDateTime dt;
-    getSendingTime (dt);
+    getTime (dt);
     d.setDateTime (SendingTime, dt);
 }
 
@@ -827,6 +827,13 @@ gwcFix::mapOrderFields (gwcOrder& order)
 }
 
 bool
+gwcFix::traderLogon (string& traderId, const cdr* msg)
+{
+    // TODO traderLogon needs looked at
+    return true;
+}
+
+bool
 gwcFix::sendOrder (gwcOrder& order)
 {
     if (!mapOrderFields (order))
@@ -839,6 +846,14 @@ bool
 gwcFix::sendOrder (cdr& order)
 {
     order.setString (MsgType, FixNewOrderSingle);
+
+    if (!order.contains (TransactTime))
+    {
+        cdrDateTime dt;
+        getTime (dt);
+        order.setDateTime (TransactTime, dt);
+    }
+
     return sendMsg (order);
 }
 
@@ -855,6 +870,14 @@ bool
 gwcFix::sendCancel (cdr& cancel)
 {
     cancel.setString (MsgType, FixOrderCancelRequest);
+
+    if (!cancel.contains (TransactTime))
+    {
+        cdrDateTime dt;
+        getTime (dt);
+        cancel.setDateTime (TransactTime, dt);
+    }
+
     return sendMsg (cancel);
 }
 
@@ -871,6 +894,14 @@ bool
 gwcFix::sendModify (cdr& modify)
 {
     modify.setString (MsgType, FixOrderCancelReplaceRequest);
+
+    if (!modify.contains (TransactTime))
+    {
+        cdrDateTime dt;
+        getTime (dt);
+        modify.setDateTime (TransactTime, dt);
+    }
+
     return sendMsg (modify);
 }
 
