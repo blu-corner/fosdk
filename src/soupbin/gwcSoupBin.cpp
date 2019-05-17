@@ -196,7 +196,6 @@ gwcSoupBin::onConnectionRead (void* data, size_t size)
             left -= messageLength;
             used += messageLength;
         }
-        return used;
     }
 
     for (;;)
@@ -222,8 +221,6 @@ gwcSoupBin::onConnectionRead (void* data, size_t size)
         }
         data = (char*)data + used;
     }
-
-    return size - left;
 }
 
 bool

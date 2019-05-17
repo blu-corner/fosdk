@@ -196,8 +196,6 @@ gwcXetra::onTcpConnectionRead (void* data, size_t size)
         }
         data = (char*)data + used; 
     }
-
-    return size - left;
 }
 
 void 
