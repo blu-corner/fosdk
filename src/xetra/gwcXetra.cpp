@@ -128,39 +128,26 @@ gwcXetra::updateApplMsgId (string& sMsgId)
 void 
 gwcXetra::onTcpConnectionReady ()
 {
+	mState = GWC_CONNECTOR_CONNECTED;
+
     cdr d;
 
-    /* check state, if init then gateway request */
-    if (mState == GWC_CONNECTOR_INIT)
-    {
-        d.setInteger (TemplateID, 10020);
-        d.setInteger (MsgSeqNum, mOutboundSeqNo);
-        d.setInteger (PartitionID, mPartition);
-        d.setString (DefaultCstmApplVerID, "6.0");
+	// session logon 
+	d.setInteger (TemplateID, 10000);
+	d.setInteger (MsgSeqNum, mOutboundSeqNo);
+	d.setInteger (HeartBtInt, 10000);
+	d.setString (DefaultCstmApplVerID, "7.1");
+	d.setString (ApplUsageOrders, "A");
+	d.setString (ApplUsageQuotes, "N");
+	d.setString (OrderRoutingIndicator, "Y");
+	d.setString (FIXEngineName, "Blucorner");
+	d.setString (FIXEngineVersion, "1");
+	d.setString (FIXEngineVendor, "Blucorner");
 
-        // need PartyIDSessionID, Password
-
-        mSessionsCbs->onLoggingOn (d);
-    }
-    else
-    {
-        // session logon 
-        d.setInteger (TemplateID, 10000);
-        d.setInteger (MsgSeqNum, mOutboundSeqNo);
-        d.setInteger (HeartBtInt, 10000);
-        d.setString (DefaultCstmApplVerID, "6.0");
-        d.setString (ApplUsageOrders, "A");
-        d.setString (ApplUsageQuotes, "N");
-        d.setString (OrderRoutingIndicator, "Y");
-        d.setString (FIXEngineName, "Blucorner");
-        d.setString (FIXEngineVersion, "1");
-        d.setString (FIXEngineVendor, "Blucorner");
-
-        // need ApplicationSystemName, ApplicationSystemVersion,
-        // ApplicationSystemVendor,  PartyIDSessionID, Password
-        
-        mSessionsCbs->onLoggingOn (d);
-    }
+	// need ApplicationSystemName, ApplicationSystemVersion,
+	// ApplicationSystemVendor,  PartyIDSessionID, Password
+	
+	mSessionsCbs->onLoggingOn (d);
 
     char space[1024];
     size_t used;
@@ -250,29 +237,6 @@ gwcXetra::dispatchCb (void* closure)
 }
 
 void
-gwcXetra::makeGwConnecion (sbfQueueItem item, void* closure)
-{
-    gwcXetra* gwc = reinterpret_cast<gwcXetra*>(closure);
-
-    if (gwc->mState != GWC_CONNECTOR_CONNECTED)
-        return;
-
-    if (gwc->mTcpConnection)    
-        delete gwc->mTcpConnection;
-
-    gwc->mTcpConnection = new SbfTcpConnection (
-                                              gwc->mSbfLog,
-                                              sbfMw_getDefaultThread (gwc->mMw),
-                                              gwc->mQueue,
-                                              &gwc->mGwHost,
-                                              false,
-                                              true, // disable-nagles
-                                              &gwc->mTcpConnectionDelegate);
-    if (!gwc->mTcpConnection->connect ())
-        return gwc->error ("failed to create connection to gateway");    
-}
-
-void
 gwcXetra::reset ()
 {
     lock ();
@@ -335,46 +299,7 @@ gwcXetra::handleTcpMsg (cdr& msg)
         return;
     }
 
-    if (mState == GWC_CONNECTOR_INIT)
-    {
-        if (templateId != 10021) // GatewayRequestResponse 
-            return;
-
-        uint32_t primaryIp;
-        uint16_t primaryPort;
-        uint32_t secondaryIp;
-        uint16_t secondaryPort;
-        uint8_t  primaryStatus;
-        uint8_t  secondaryStatus;
-        msg.getInteger (GatewayID, primaryIp);
-        msg.getInteger (GatewaySubID, primaryPort);
-        msg.getInteger (SecondaryGatewayID, secondaryIp);
-        msg.getInteger (SecondaryGatewaySubID, secondaryPort);
-        msg.getInteger (GatewayStatus, primaryStatus);
-        msg.getInteger (SecondaryGatewayStatus, secondaryStatus);
-        if (primaryStatus == 0 && secondaryStatus == 0)
-            return error ("both gateways are standby");
-
-        if (primaryStatus == 1)
-        {
-            mGwHost.sin.sin_addr.s_addr = htonl (primaryIp);
-            mGwHost.sin.sin_port = htons (primaryPort);
-        }
-        else
-        {
-            mGwHost.sin.sin_addr.s_addr = htonl (secondaryIp);
-            mGwHost.sin.sin_port = htons (secondaryPort);
-
-        }
-        mGwHost.sin.sin_family = AF_INET;
-        sbfQueue_enqueue (mQueue,
-                          makeGwConnecion,
-                          (void*)this);
-        mState = GWC_CONNECTOR_CONNECTED;
-        mMessageCbs->onAdmin (1, msg);
-        return;         
-    }
-    else if (mState == GWC_CONNECTOR_CONNECTED)
+    if (mState == GWC_CONNECTOR_CONNECTED)
     {
         /* can be reject or LogonResponse */
         if (templateId == 10001)
@@ -643,6 +568,9 @@ gwcXetra::init (gwcSessionCallbacks* sessionCbs,
 bool 
 gwcXetra::start (bool reset)
 {
+	if (mTcpConnection != NULL)
+		delete mTcpConnection;
+
     mTcpConnection = new SbfTcpConnection (mSbfLog,
                                            sbfMw_getDefaultThread (mMw),
                                            mQueue,
