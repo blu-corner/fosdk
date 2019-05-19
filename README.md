@@ -96,23 +96,23 @@ connector
 
 | GWC name    | Property             | Valid values                 | Description                            |
 |:------------|:--------------------:| :---------------------------:|:--------------------------------------:|
-! millennium  | venue                | lse/oslo/turquoise/borsa/jse | Name of the millennium venue           |
+| millennium  | venue                | lse/oslo/turquoise/borsa/jse | Name of the millennium venue           |
 |             | seqno_cache          | file name                    | File where sequence numbers are stored |
-|             | real_time_host       | <ip>:<port>                  | Real time connection string            |
-|             | recovery_host        | <ip>:<port>                  | Message recovery connection string     |
+|             | real_time_host       | ip:port                      | Real time connection string            |
+|             | recovery_host        | ip:port                      | Message recovery connection string     |
 |             | enable_raw_messages  | True/False                   | Get raw binary messages in callbacks   |
 |             |                      |                              |                                        |
-| optiq       | host                 | <ip>:<port>                  | Connection string                      |
+| optiq       | host                 | ip:port                      | Connection string                      |
 |             | partition            | Number                       | Matching Engine partition              |
 |             | accessId             | Token                        | Exchange client access ID              |
 |             | seqno_cache          | file name                    | File where sequence numbers are stored |
 |             | enable_raw_messages  | True/False                   | Get raw binary messages in callbacks   |
 |             |                      |                              |                                        |
-| swx         | host                 | <ip>:<port>                  | Connection string                      | 
+| swx         | host                 | ip:port                      | Connection string                      | 
 |             | seqno_cache          | file name                    | File where sequence numbers are stored |
 |             | enable_raw_messages  | True/False                   | Get raw binary messages in callbacks   |
 |             |                      |                              |                                        |
-| xetra       | host                 | <ip>:<port>                  | Connection string                      |
+| xetra       | host                 | ip:port                      | Connection string                      |
 |             | partition            | Number                       | Matching Engine partition              |
 |             | accessId             | Token                        | Exchange cleint access ID              |
 |             | applMsgId_cache file | name                         | File where appl msg Ids are stored     |
