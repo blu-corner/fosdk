@@ -1,55 +1,46 @@
 # Front Office SDK [![Build Status](https://travis-ci.com/blu-corner/fosdk.svg?branch=master)](https://travis-ci.com/blu-corner/fosdk) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=blu-corner_fosdk&metric=alert_status)](https://sonarcloud.io/dashboard?id=blu-corner_fosdk)
 SDK for building exchange connectivity applications in C/C++/Python/Java/C#
 
-## Building
+- [Overview](#overview)
+    - [Introduction]
+    - [Getting Started](#getting-started)
+    - [Dependencies](#dependencies)
+    - [Example Usage](#example-usage)
+- [Architecture](#architecture)
+- [Supported Venues](#supported-venues)
+- [Configuration](#venue-configuration)
+- [Usgae](#usage)
+    - [Common Types](#common-types)
+    - [API walkthrough](#api-walkthough)
+- [Examples](#examples)
+    - [CDR example](#cdr-example)
+    - [Raw packets example](#raw-example)
 
-Requires cmake, default install location is build-directory/install
 
-```bash
-$ git submodule update --init
-$ mkdir build
-$ cd build
-$ cmake -DTESTS=ON -DPYTHON=ON -DJAVA=ON -DCSHARP=ON ../
-$ make
-$ make install
-```
+# Overview
 
-### Testing
+## Introduction
 
-Currently you can run the test-millennium connector via:
+## Getting Started
 
-```bash
-$ export LD_LIBRARY_PATH=`pwd`/install/lib:$LD_LIBRARY_PATH
-$ gdb --args ./install/bin/gwc-test
-```
+## Dependencies
 
-On mac you need to use lldb from the xcode tools
-```bash
-$ export LD_LIBRARY_PATH=`pwd`/install/lib:$LD_LIBRARY_PATH
-$ /Applications/Xcode.app/Contents/Developer/usr/bin/lldb -- ./install/bin/gwc-cdr-test
-```
+## Example usage
 
-### Bindings
+# Architecture
 
-Test Python bindings:
+# Supported Venues
 
-```bash
-$ cd install/lib/python
-$ PYTHONPATH=`pwd` LD_LIBRARY_PATH=`pwd`/../:$LD_LIBRARY_PATH python ../../../../src/bindings/python/example.py
-```
+# Configuration
 
-Test Java bindings:
+# Usage
 
-```bash
-$ cd install/lib/java
-$ sh build.sh
-$ sh run.sh
-```
+## Common Types
 
-Test C# bindings:
+## API walkthrough
 
-```bash
-$ cd install/lib/csharp
-$ sh build.sh
-$ sh run.sh
-```
+# Examples
+
+## CDR example
+
+## Raw packets example
