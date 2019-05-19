@@ -21,7 +21,8 @@ include_directories(
   )
 
 add_library (gwcmillennium SHARED ${SOURCES})
-target_link_libraries (gwcmillennium gwc lsecodec oslocodec turquoisecodec)
+target_link_libraries (gwcmillennium gwc lsecodec oslocodec turquoisecodec
+    jsecodec borsacodec)
 
 install (TARGETS gwcmillennium
          RUNTIME DESTINATION lib
