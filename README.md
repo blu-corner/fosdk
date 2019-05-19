@@ -194,7 +194,7 @@ typedef enum
     GWC_TIF_GFX = 'B',
     GWC_TIF_GFS = 'C',
 } gwcTif;
-``
+```
 
 ## API walkthrough
 
