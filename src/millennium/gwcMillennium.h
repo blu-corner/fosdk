@@ -11,6 +11,8 @@
 #include "lseCodec.h"
 #include "osloCodec.h"
 #include "turquoiseCodec.h"
+#include "jseCodec.h"
+#include "borsaitalianaCodec.h"
 
 #include <map>
 
