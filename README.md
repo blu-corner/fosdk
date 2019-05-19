@@ -167,4 +167,4 @@ Example Xetra connector using CDR interface for sending orders/modifies/cancels 
 
 ## Raw packets example
 
-Eample Lse connector using Raw packets interface for sending orders/modifies/cancels [lse-raw-example.cpp)(./examples/lse-raw-example.cpp)
+Eample Lse connector using Raw packets interface for sending orders/modifies/cancels [lse-raw-example.cpp](./examples/lse-raw-example.cpp)
