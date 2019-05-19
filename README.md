@@ -163,5 +163,8 @@ Finally stop () can be called to disconnect from the session.
 
 ## CDR example
 
+Example Xetra connector using CDR interface for sending orders/modifies/cancels [xetra-cdr-example.cpp](./examples/xetra-cdr-example.cpp)
+
 ## Raw packets example
 
+Eample Lse connector using Raw packets interface for sending orders/modifies/cancels [lse-raw-example.cpp)(./examples/lse-raw-example.cpp)
