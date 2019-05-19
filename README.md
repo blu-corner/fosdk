@@ -172,25 +172,112 @@ public:
 In you main application create/config a logger object and create the configuration required, refer to 
 configuration tables above.
 
+```cpp
+    properties p;
+    p.setProperty ("lh.console.level", "debug");
+    p.setProperty ("lh.console.color", "true");
+
+    std::string errorMessage;
+    bool ok = logService::get ().configure (p, errorMessage);
+    if (not ok)
+    {
+        std::string e("failed to configure logger: " + errorMessage);
+        errx (1, "%s", e.c_str ());
+    }
+
+    properties props (p, "gwc", "millennium", "sim");
+    props.setProperty ("venue", "lse");
+    props.setProperty ("real_time_host", "127.0.0.1:9899");
+    props.setProperty ("recovery_host", "127.0.0.1:10000");
+
+    logger* log = logService::getLogger ("MILLENIUM_TEST");
+```
+
 Create a connector using factory method gwcConnectorFactory::get(), this will automatically allocate and 
 load the correct shared object.
+
+```cpp
+    gwcConnector* gwc = gwcConnectorFactory::get (log, "millennium", props);
+```
 
 Next call init() on the connector, passing the session and message callback objects and properties. This can 
 fail is the props are incorrect so check return and look at error if applicable. 
 
+```cpp
+    if (!gwc->init (&sessionCbs, &messageCbs, props))
+        errx (1, "failed to initialise connector...");
+```
+
 Calling start will being the session logic for the exchange, mostly this will start by making a TCP connection 
 and then sending the initial logon request.
+
+```cpp
+    if (!gwc->start (false))
+        errx (1, "failed to initialise connector...");
+```
 
 A blocking call waitForLogon () is provided to block the main thread until the connector finishes its logon 
 process and is ready to accept orders to pass to the exchange.
 
+```cpp
+    gwc->waitForLogon ();
+```
+
 Note that during the start process the session callback onLoggingOn will be called, if the connector needs a 
 username or password these can be added to the CDR at this point to be used to complete logon.
+
+```cpp
+     virtual void onLoggingOn (cdr& msg)
+    {
+        mLog->info ("session logging on...");
+
+        /* set username and password */
+        msg.setString (UserName, mUsername);
+        msg.setString (Password, mPassword);
+    }
+```
 
 Once the session is logged on any send method can be called and events and exchange messages will be 
 dispatched to the user callbacks.
 
+```cpp
+    /* send order */
+    gwcOrder order;
+    order.setPrice (1234.45);
+    order.setQty (1000);
+    order.setTif (GWC_TIF_DAY);
+    order.setSide (GWC_SIDE_BUY);
+    order.setOrderType (GWC_ORDER_TYPE_LIMIT);
+    order.setString (ClientOrderID, "myorder");
+    order.setInteger (InstrumentID, 133215); // VOD.L
+    order.setInteger (AutoCancel, 1);
+
+    order.setString (TraderID, "TX1");
+    order.setString (Account, "account");
+    order.setInteger (ClearingAccount, 1);
+    order.setInteger (FXMiFIDFlags, 0);
+    order.setInteger (PartyRoleQualifiers, 0);
+    order.setInteger (ExpireDateTime, 0);
+    order.setInteger (DisplayQty, 0);
+    order.setInteger (Capacity, 1);
+    order.setInteger (OrderSubType, 0);
+    order.setInteger (Anonymity, 0);
+    order.setDouble (StopPrice, 0.0);
+    order.setInteger (PassiveOnlyOrder, 0);
+    order.setInteger (ClientID, 1234);
+    order.setInteger (InvestmentDecisionMaker, 0);
+    order.setInteger (MinimumQuantity, 0);
+    order.setInteger (ExecutingTrader, 7676);
+
+    if (!gwc->sendOrder (order))
+        errx  (1, "failed to send order myorder...");
+```
+
 Finally stop () can be called to disconnect from the session.
+
+```cpp
+    gwc->stop ();
+```
 
 # Examples
 
