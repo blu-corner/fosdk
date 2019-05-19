@@ -130,11 +130,44 @@ can be set explicitly in the CDR object.
 ## API walkthrough
 
 The following outlines the high level steps required when using a venue from the FOSDK, please refer to  
-lse-cdr-example.cpp.
+[lse-cdr-example.cpp](./examples/lse-cdr-example.cpp)
 
 First define your own delegates inherited from gwcSessionCallbacks and gwcMessageCallbacks these will define 
 what your application wants to do on session events and exchange messages. Note that these classes are pure 
 virtual so an implementation is needed for each pure virtual method, even if no action is performed in the methods.
+
+```cpp
+#include "gwcConnector.h"
+#include "fields.h"
+
+using namespace std;
+using namespace neueda;
+
+/* Session callbacks inherit from gwcSessionCallbacks */
+class sessionCallbacks : public gwcSessionCallbacks
+{
+public:
+    virtual void onConnected ()
+    {
+        mLog->info ("session logged on...");
+    }
+
+    virtual void onLoggingOn (cdr& msg)
+    {
+
+/* Message callbacks inherit from gwcMessageCallbacks */
+class messageCallbacks : public gwcMessageCallbacks
+{
+public:
+    virtual void onAdmin (uint64_t seqno, const cdr& msg)
+    {
+        mLog->info ("onAdmin msg...");
+        mLog->info ("%s", msg.toString ().c_str ());
+    }
+
+    virtual void onOrderAck (uint64_t seqno, const cdr& msg)
+    {
+```
 
 In you main application create/config a logger object and create the configuration required, refer to 
 configuration tables above.
