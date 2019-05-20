@@ -24,7 +24,7 @@ gwcSwx::getCodec ()
 }
 
 bool
-gwcSwx::sendOrder (gwcOrder& order)
+gwcSwx::mapOrderFields (gwcOrder& order)
 {
     if (order.mOrderTypeSet)
     {
@@ -85,9 +85,16 @@ gwcSwx::sendOrder (gwcOrder& order)
         }
     }
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+    return true;
+}
+
+bool
+gwcSwx::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+    
+    return sendOrder ((cdr&)order);
 }
 
 bool
@@ -99,11 +106,29 @@ gwcSwx::sendOrder (cdr& order)
 }
 
 bool
+gwcSwx::sendCancel (gwcOrder& cancel)
+{
+    if (!mapOrderFields (cancel))
+        return false;
+    
+    return sendCancel ((cdr&)cancel);
+}
+
+bool
 gwcSwx::sendCancel (cdr& cancel)
 {
     cancel.setString (MessageType, "%c", SWX_UNSEQUENCED_MESSAGE_TYPE);
     cancel.setString (Type, "%c", SWX_CANCEL_ORDER_MESSAGE_TYPE);
     return sendMsg (cancel);
+}
+
+bool
+gwcSwx::sendModify (gwcOrder& modify)
+{
+    if (!mapOrderFields (modify))
+        return false;
+    
+    return sendModify ((cdr&)modify);
 }
 
 bool

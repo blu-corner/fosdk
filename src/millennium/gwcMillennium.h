@@ -121,8 +121,10 @@ public:
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
 
+    virtual bool sendCancel (gwcOrder& cancel);
     virtual bool sendCancel (cdr& cancel);
 
+    virtual bool sendModify (gwcOrder& modify);
     virtual bool sendModify (cdr& modify);
 
     virtual bool sendMsg (cdr& msg);
@@ -148,6 +150,7 @@ private:
     void error (const string& err);
     bool isSessionMessage (LseHeader* hdr);
     int getSeqnum (LseHeader* hdr, uint8_t& appId);
+    bool mapOrderFields (gwcOrder& order);
 
     // handle state
     void onRealTimeConnectionReady ();
