@@ -189,7 +189,7 @@ int main (int argc, char** argv)
     int64_t clOrdId = time (NULL);
     gwcOrder border;
     border.setPrice (1234.45);
-    border.setQty (5);
+    border.setQty (50000);
     border.setTif (GWC_TIF_DAY);
     border.setSide (GWC_SIDE_BUY);
     border.setOrderType (GWC_ORDER_TYPE_LIMIT);

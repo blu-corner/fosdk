@@ -55,8 +55,13 @@ public:
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
+
+    virtual bool sendCancel (gwcOrder& cancel);
     virtual bool sendCancel (cdr& cancel);
+
+    virtual bool sendModify (gwcOrder& modify);
     virtual bool sendModify (cdr& modify);
+
     virtual bool sendMsg (cdr& msg);
     virtual bool sendRaw (void* data, size_t len);
 
@@ -71,14 +76,12 @@ protected:
     sbfThread                     mThread;
 
 private:   
-    // static event callbacks 
-    static void makeGwConnecion (sbfQueueItem item, void* closure);
-
     // utility methods
     void reset ();
     void error (const string& err);
     void sendRetransRequest ();
     void updateApplMsgId (string& sMsgId);
+    bool mapOrderFields (gwcOrder& gwc);
 
     // handle state
     void onTcpConnectionReady ();
@@ -107,7 +110,6 @@ private:
 
     // members 
     sbfTcpConnectionAddress mTcpHost;
-    sbfTcpConnectionAddress mGwHost;
     bool                    mDispatching;
     sbfTimer                mHb;
     sbfTimer                mReconnectTimer;

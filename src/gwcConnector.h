@@ -108,8 +108,8 @@ public:
         mSbfLog = sbfLog_create (NULL, "sbf"); // can't fail
         sbfLog_setHook (mSbfLog, SBF_LOG_INFO, sbfLogCb, this);
         sbfLog_setLevel (mSbfLog, SBF_LOG_INFO);
-        sbfCondVar_init (&mLoggedOnCond);
-        sbfMutex_init (&mLoggedOnMutex, 1);
+        sbfCondVar_init (&mEventCond);
+        sbfMutex_init (&mEventMutex, 1);
         sbfMutex_init (&mLock, 1);
     }
 
@@ -117,8 +117,8 @@ public:
     {
         if (mSbfLog)
             sbfLog_destroy (mSbfLog);
-        sbfCondVar_destroy (&mLoggedOnCond);
-        sbfMutex_destroy (&mLoggedOnMutex);
+        sbfCondVar_destroy (&mEventCond);
+        sbfMutex_destroy (&mEventMutex);
         sbfMutex_destroy (&mLock);
     }
 
@@ -142,9 +142,11 @@ public:
 
     /* Send a cancel */
     virtual bool sendCancel (cdr& cancel) = 0;
+    virtual bool sendCancel (gwcOrder& cancel) = 0;
 
     /* Send a modify */
     virtual bool sendModify (cdr& modify) = 0;
+    virtual bool sendModify (gwcOrder& modify) = 0;
 
     /* Send a message */
     virtual bool sendMsg (cdr& msg) = 0;
@@ -157,9 +159,20 @@ public:
     {
         while (mLoggedOn == 0)
         {
-            sbfMutex_lock (&mLoggedOnMutex);
-            sbfCondVar_wait (&mLoggedOnCond, &mLoggedOnMutex);
-            sbfMutex_unlock (&mLoggedOnMutex);
+            sbfMutex_lock (&mEventMutex);
+            sbfCondVar_wait (&mEventCond, &mEventMutex);
+            sbfMutex_unlock (&mEventMutex);
+        }     
+    } 
+
+    /* wait for logoff event */
+    void waitForLogoff ()
+    {
+        while (mLoggedOn == 1)
+        {
+            sbfMutex_lock (&mEventMutex);
+            sbfCondVar_wait (&mEventCond, &mEventMutex);
+            sbfMutex_unlock (&mEventMutex);
         }     
     } 
 
@@ -173,9 +186,17 @@ protected:
     void loggedOnEvent ()
     {
         mLoggedOn = 1;
-        sbfMutex_lock (&mLoggedOnMutex);
-        sbfCondVar_signal (&mLoggedOnCond);
-        sbfMutex_unlock (&mLoggedOnMutex);
+        sbfMutex_lock (&mEventMutex);
+        sbfCondVar_signal (&mEventCond);
+        sbfMutex_unlock (&mEventMutex);
+    }
+
+    void loggedOffEvent ()
+    {
+        mLoggedOn = 0;
+        sbfMutex_lock (&mEventMutex);
+        sbfCondVar_signal (&mEventCond);
+        sbfMutex_unlock (&mEventMutex);
     }
 
     void lock ()
@@ -224,8 +245,8 @@ private:
         return 1; // don't let sbf log it as well
     }
 
-    sbfCondVar mLoggedOnCond;
-    sbfMutex   mLoggedOnMutex;
+    sbfCondVar mEventCond;
+    sbfMutex   mEventMutex;
 };
 
 /* Factory to create correct connector */

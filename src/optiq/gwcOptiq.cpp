@@ -396,6 +396,7 @@ gwcOptiq::handleLogoffResponse (cdr& msg)
     }
     reset ();
     mSessionsCbs->onLoggedOff (0, msg);
+    loggedOffEvent ();
 }
 
 void
@@ -602,6 +603,7 @@ gwcOptiq::stop ()
         cdr logoffResponse;
         logoffResponse.setInteger (TemplateId, OptiqLogoutTemplateId);
         mSessionsCbs->onLoggedOff (0, logoffResponse);
+        loggedOffEvent ();
         unlock ();
         return true;
     }
@@ -617,7 +619,7 @@ gwcOptiq::stop ()
 }
 
 bool
-gwcOptiq::sendOrder (gwcOrder& order)
+gwcOptiq::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setInteger (OrderPx, order.mPrice);
@@ -689,9 +691,16 @@ gwcOptiq::sendOrder (gwcOrder& order)
         }
     }
 
-    // downgrade to cdr so compiler picks correct method
-    cdr& o = order;
-    return sendOrder (o);
+    return true;
+}
+
+bool
+gwcOptiq::sendOrder (gwcOrder& order)
+{
+    if (!mapOrderFields (order))
+        return false;
+
+    return sendOrder ((cdr&)order);
 }
 
 bool 
@@ -701,11 +710,29 @@ gwcOptiq::sendOrder (cdr& order)
     return sendMsg (order);
 }
 
+bool
+gwcOptiq::sendCancel (gwcOrder& cancel)
+{
+    if (!mapOrderFields (cancel))
+        return false;
+
+    return sendCancel ((cdr&)cancel);
+}
+
 bool 
 gwcOptiq::sendCancel (cdr& cancel)
 {
     cancel.setInteger (TemplateId, OptiqCancelRequestTemplateId);
     return sendMsg (cancel);
+}
+
+bool
+gwcOptiq::sendModify (gwcOrder& modify)
+{
+    if (!mapOrderFields (modify))
+        return false;
+
+    return sendModify ((cdr&)modify);
 }
 
 bool 

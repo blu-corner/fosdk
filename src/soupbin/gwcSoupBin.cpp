@@ -196,7 +196,6 @@ gwcSoupBin::onConnectionRead (void* data, size_t size)
             left -= messageLength;
             used += messageLength;
         }
-        return used;
     }
 
     for (;;)
@@ -222,8 +221,6 @@ gwcSoupBin::onConnectionRead (void* data, size_t size)
         }
         data = (char*)data + used;
     }
-
-    return size - left;
 }
 
 bool
@@ -308,6 +305,7 @@ gwcSoupBin::handleSessionMessge (cdr& msg)
         }
         reset ();
         mSessionsCbs->onLoggedOff (mSequenceNumber, msg);
+        loggedOffEvent ();
     }
     else if (mType[0] == GWC_SOUP_BIN_SERVER_HEART_BEAT_MESSAGE_TYPE)
     {
@@ -572,6 +570,7 @@ gwcSoupBin::stop ()
     {
         reset ();
         mSessionsCbs->onLoggedOff (0, logoff);
+        loggedOffEvent ();
         return true;
     }
  
