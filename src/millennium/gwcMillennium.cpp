@@ -83,10 +83,14 @@ getConnector (neueda::logger* log, const neueda::properties& props)
 
     if (venue == "oslo")
         return new gwcMillennium<osloCodec> (log);
-    if (venue == "lse")
+    else if (venue == "lse")
         return new gwcMillennium<lseCodec> (log);
-    if (venue == "turqoise")
+    else if (venue == "turqoise")
         return new gwcMillennium<turquoiseCodec> (log);
+    else if (venue == "jse")
+        return new gwcMillennium<jseCodec> (log);
+    else if (venue == "borsa")
+        return new gwcMillennium<borsaitalianaCodec> (log);
 
     log->warn ("unknown venue must be olso/lse");
     return NULL;

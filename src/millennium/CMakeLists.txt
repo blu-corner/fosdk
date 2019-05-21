@@ -14,10 +14,15 @@ include_directories(
   ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/oslo/packets
   ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/turquoise
   ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/turquoise/packets
+  ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/jse
+  ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/jse/packets
+  ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/borsa
+  ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/borsa/packets
   )
 
 add_library (gwcmillennium SHARED ${SOURCES})
-target_link_libraries (gwcmillennium gwc lsecodec oslocodec turquoisecodec)
+target_link_libraries (gwcmillennium gwc lsecodec oslocodec turquoisecodec
+    jsecodec borsacodec)
 
 install (TARGETS gwcmillennium
          RUNTIME DESTINATION lib

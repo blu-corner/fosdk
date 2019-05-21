@@ -18,6 +18,10 @@ include_directories(
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/oslo/packets
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/turquoise
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/turquoise/packets
+    ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/jse
+    ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/jse/packets
+    ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/borsa
+    ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/borsa/packets
     ${CMAKE_BINARY_DIR}/googletest/include
     )
 
@@ -39,6 +43,8 @@ target_link_libraries(unittest
   fields
   lsecodec
   oslocodec
+  jsecodec
+  borsacodec
   gwc
   gwcmillennium
   gtest
