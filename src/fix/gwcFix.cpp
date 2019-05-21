@@ -752,75 +752,124 @@ gwcFix::mapOrderFields (gwcOrder& order)
 
     if (order.mOrderTypeSet)
     {
+        string ordType;
         switch (order.mOrderType)
         {
         case GWC_ORDER_TYPE_MARKET:
+            ordType = "1";
         case GWC_ORDER_TYPE_LIMIT:
+            ordType = "2";
         case GWC_ORDER_TYPE_STOP:
+            ordType = "3";
         case GWC_ORDER_TYPE_STOP_LIMIT:
+            ordType = "4";
         case GWC_ORDER_TYPE_MARKET_ON_CLOSE:
+            ordType = "5";
         case GWC_ORDER_TYPE_WITH_OR_WITHOUT:
+            ordType = "6";
         case GWC_ORDER_TYPE_LIMIT_OR_BETTER:
+            ordType = "7";
         case GWC_ORDER_TYPE_LIMIT_WITH_OR_WITHOUT:
+            ordType = "8";
         case GWC_ORDER_TYPE_ON_BASIS:
+            ordType = "9";
         case GWC_ORDER_TYPE_ON_CLOSE:
+            ordType = "A";
         case GWC_ORDER_TYPE_LIMIT_ON_CLOSE:
+            ordType = "B";
         case GWC_ORDER_TYPE_FOREX:
+            ordType = "C";
         case GWC_ORDER_TYPE_PREVIOUSLY_QUOTED:
+            ordType = "D";
         case GWC_ORDER_TYPE_PREVIOUSLY_INDICATED:
+            ordType = "E";
         case GWC_ORDER_TYPE_PEGGED:
-            order.setString (OrdType, "%c", order.mOrderType);
+            ordType = "P";
             break;
         default:
             break;
         }
+
+        if(!ordType.empty())
+            order.setString (OrdType, "%c", *ordType.c_str());
     }
 
     if (order.mSideSet)
     {
+        string side;
         switch (order.mSide)
         {
         case GWC_SIDE_BUY:
+            side = "1";
         case GWC_SIDE_SELL:
+            side = "2";
         case GWC_SIDE_BUY_MINUS:
+            side = "3";
         case GWC_SIDE_SELL_PLUS:
+            side = "4";
         case GWC_SIDE_SELL_SHORT:
+            side = "5";
         case GWC_SIDE_SELL_SHORT_EXEMPT:
+            side = "6";
         case GWC_SIDE_UNDISCLOSED:
+            side = "7";
         case GWC_SIDE_CROSS:
+            side = "8";
         case GWC_SIDE_CROSS_SHORT:
+            side = "9";
         case GWC_SIDE_CROSS_SHORT_EXEMPT:
+            side = "A";
         case GWC_SIDE_AS_DEFINED:
+            side = "B";
         case GWC_SIDE_OPPOSITE:
+            side = "C";
         case GWC_SIDE_SUBSCRIBE:
+            side = "D";
         case GWC_SIDE_REDEEM:
+            side = "E";
         case GWC_SIDE_LEND:
+            side = "F";
         case GWC_SIDE_BORROW:
+            side = "G";
         case GWC_SIDE_SELL_UNDISCLOSED:
-            order.setString (Side, "%c", order.mSide);
+            side = "H";
             break;
         default:
             break;
         }
+
+        if(!side.empty())
+            order.setString(Side, "%c", *side.c_str());
     }
 
     if (order.mTifSet)
     {
+        string tif;
         switch (order.mTif)
         {
         case GWC_TIF_DAY:
+            tif = "0";
         case GWC_TIF_GTC:
+            tif = "1";
         case GWC_TIF_OPG:
+            tif = "2";
         case GWC_TIF_IOC:
+            tif = "3";
         case GWC_TIF_FOK:
+            tif = "4";
         case GWC_TIF_GTX:
+            tif = "5";
         case GWC_TIF_GTD:
+            tif = "6";
         case GWC_TIF_ATC:
-            order.setString (TimeInForce, "%c", order.mTif);
+            tif = "7";
             break;
         default:
             break;
         }
+
+        if(!tif.empty()) 
+            order.setString (TimeInForce, "%c", *tif.c_str());
     }
 
     return true;
