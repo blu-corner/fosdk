@@ -60,7 +60,7 @@ install(
 add_subdirectory(millennium)
 add_subdirectory(soupbin)
 add_subdirectory(swx)
-add_subdirectory(xetra)
+add_subdirectory(eti)
 add_subdirectory(optiq)
 add_subdirectory(fix)
 add_subdirectory(bindings)

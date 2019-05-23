@@ -1,29 +1,28 @@
 #pragma once
 /*
- * Xetra connector 
+ * Eti connector 
  */
 #include "gwcConnector.h"
 #include "xetraCodec.h"
+#include "eurexCodec.h"
 
 #include "SbfTcpConnection.hpp"
 #include "sbfCacheFile.h"
 #include "sbfMw.h"
-
-#include "xetraCodec.h"
 
 #include <map>
 
 using namespace std;
 using namespace neueda;
 
-class gwcXetra;
-
-class gwcXetraTcpConnectionDelegate : public SbfTcpConnectionDelegate
+template <typename CodecT> class gwcEti;
+template <typename CodecT>
+class gwcEtiTcpConnectionDelegate : public SbfTcpConnectionDelegate
 {
-    friend class gwcXetra;
+    friend class gwcEti<CodecT>;
     
 public:
-    gwcXetraTcpConnectionDelegate (gwcXetra* gwc);
+    gwcEtiTcpConnectionDelegate (gwcEti<CodecT>* gwc);
 
     virtual void onReady ();
 
@@ -32,16 +31,17 @@ public:
     virtual size_t onRead (void* data, size_t size);
 
 private:
-    gwcXetra* mGwc;
+    gwcEti<CodecT>* mGwc;
 };
 
-class gwcXetra : public gwcConnector
+template <typename CodecT>
+class gwcEti : public gwcConnector
 {
-    friend class gwcXetraTcpConnectionDelegate;
+    friend class gwcEtiTcpConnectionDelegate<CodecT>;
     
 public:
-    gwcXetra (neueda::logger* log);
-    virtual ~gwcXetra ();
+    gwcEti (neueda::logger* log);
+    virtual ~gwcEti ();
 
     virtual bool init (gwcSessionCallbacks* sessionCbs,
                        gwcMessageCallbacks* messageCbs, 
@@ -67,7 +67,7 @@ public:
 
 protected:
     SbfTcpConnection*             mTcpConnection;
-    gwcXetraTcpConnectionDelegate mTcpConnectionDelegate;
+    gwcEtiTcpConnectionDelegate<CodecT> mTcpConnectionDelegate;
 
     sbfCacheFile                  mCacheFile;
     sbfCacheFileItem              mCacheItem;
@@ -95,7 +95,7 @@ private:
     void handleRetransMeResponse (cdr& msg);
     void handleTraderLogon (cdr& msg);
     void handleLogoffResponse (cdr& msg);
-    void handleExecutionMsg (cdr& msg); 
+    void handleExchangeMsg (int, cdr& msg, const int); 
     void handleOrderCancelRejectMsg (cdr& msg);
 
 
@@ -113,7 +113,7 @@ private:
     bool                    mDispatching;
     sbfTimer                mHb;
     sbfTimer                mReconnectTimer;
-    xetraCodec              mCodec;
+    CodecT                  mCodec;
     bool                    mSeenHb;
     int                     mMissedHb;
     uint64_t                mOutboundSeqNo;
