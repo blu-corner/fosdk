@@ -161,7 +161,6 @@ protected:
     void mockInitilizeConnector ()
     {
         mProps->setProperty ("host", "127.0.0.1:9899");
-        mProps->setProperty ("partition", "31");
         mProps->setProperty ("venue", "eurex");
         bool ok = mConnector->init (mSessionCallbacks,
                                     mMessageCallbacks,
@@ -334,7 +333,6 @@ protected:
 
 TEST_F(EurexEtiTestHarness, TEST_THAT_INIT_FAILS_ON_MISSING_HOST_PARAM)
 {
-    mProps->setProperty ("partition", "31");
     mProps->setProperty ("venue", "eurex");
     bool ok = mConnector->init(mSessionCallbacks, mMessageCallbacks, *mProps);
     ASSERT_FALSE(ok);
@@ -343,7 +341,6 @@ TEST_F(EurexEtiTestHarness, TEST_THAT_INIT_FAILS_ON_MISSING_HOST_PARAM)
 TEST_F(EurexEtiTestHarness, TEST_THAT_INIT_FAILS_ON_INVALID_HOST_PARAM)
 {
     mProps->setProperty ("host", "Test.");
-    mProps->setProperty ("partition", "31");
     mProps->setProperty ("venue", "eurex");
     bool ok = mConnector->init(mSessionCallbacks, mMessageCallbacks, *mProps);
     ASSERT_FALSE(ok);
@@ -352,7 +349,6 @@ TEST_F(EurexEtiTestHarness, TEST_THAT_INIT_FAILS_ON_INVALID_HOST_PARAM)
 TEST_F(EurexEtiTestHarness, TEST_THAT_INIT_SUCCEEDS_ON_VALID_PARAMS)
 {
     mProps->setProperty ("host", "127.0.0.1:9899");
-    mProps->setProperty ("partition", "31");
     mProps->setProperty ("venue", "eurex");
     bool ok = mConnector->init(mSessionCallbacks, mMessageCallbacks, *mProps);
     ASSERT_TRUE(ok);

@@ -335,6 +335,7 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
         {
             mState = GWC_CONNECTOR_READY;
             mLog->info ("session logon complete");
+            msg.getInteger (PartitionID, mPartition);
             mMessageCbs->onAdmin (1, msg);
             mSessionsCbs->onLoggedOn (1, msg);
 
@@ -533,16 +534,6 @@ gwcEti<CodecT>::init (gwcSessionCallbacks* sessionCbs,
         return false;
     }
 
-    if (!props.get ("partition", v))
-    {
-        mLog->err ("missing propertry partition");
-        return false;
-    }
-    if (!utils_parseNumber (v, mPartition))
-    {
-        mLog->err ("invalid prorpertry partition");
-        return false;
-    }
     if (!props.get ("venue", v))
     {
         mLog->err ("missing propertry venue");
