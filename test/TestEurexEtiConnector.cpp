@@ -117,7 +117,7 @@ protected:
         d.setInteger (LastFragment, 1);
         d.setInteger (OrderID, 12345);
         d.setInteger (ClOrdID, 12345);
-        d.setInteger (SecurityID, 1010);
+        d.setInteger (SimpleSecurityID, 1010);
         d.setInteger (ExecID, 1558520998956394194);
         d.setInteger (TrdRegTSEntryTime, 1558520998956394194);
         d.setInteger (TrdRegTSTimePriority, 1558520998956394194);
@@ -299,7 +299,7 @@ protected:
         order.setOrderType (GWC_ORDER_TYPE_LIMIT);
         order.setInteger (SenderSubID, 123456789);
         order.setInteger (ClOrdID, clOrdId);
-        order.setInteger (SecurityID, 485241),
+        order.setInteger (SimpleSecurityID, 485241),
         order.setInteger (PartyIDClientID, 0);
         order.setInteger (PartyIdInvestmentDecisionMaker, 2000000003);
         order.setInteger (ExecutingTrader, 2000005140);
