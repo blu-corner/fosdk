@@ -112,10 +112,9 @@ connector
 |             | seqno_cache          | file name                    | File where sequence numbers are stored |
 |             | enable_raw_messages  | True/False                   | Get raw binary messages in callbacks   |
 |             |                      |                              |                                        |
-| xetra       | host                 | ip:port                      | Connection string                      |
-|             | partition            | Number                       | Matching Engine partition              |
-|             | accessId             | Token                        | Exchange cleint access ID              |
-|             | applMsgId_cache file | name                         | File where appl msg Ids are stored     |
+| eti         | venue                | xetra/eurex                  | Name of the eti venue                  |
+|             | host                 | ip:port                      | Connection string                      |
+|             | applMsgId_cache      | name                         | File where appl msg Ids are stored     |
 |             | enable_raw_messages  | True/False                   | Get raw binary messages in callbacks   |
 
 # Usage
