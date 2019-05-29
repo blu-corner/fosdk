@@ -138,7 +138,7 @@ int main (int argc, char** argv)
 
     properties props (p, "gwc", "xetra", "sim");
     props.setProperty ("host", "127.0.0.1:9999");
-    props.setProperty ("partition", "58");
+    props.setProperty ("venue", "xetra");
 
     logger* log = logService::getLogger ("XETRA_TEST");
 
@@ -148,7 +148,7 @@ int main (int argc, char** argv)
     messageCallbacks messageCbs;
     messageCbs.mLog = log;
 
-    gwcConnector* gwc = gwcConnectorFactory::get (log, "xetra", props);
+    gwcConnector* gwc = gwcConnectorFactory::get (log, "eti", props);
 
     if (gwc == NULL)
         errx (1, "failed to get connector...");

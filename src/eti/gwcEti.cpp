@@ -1,30 +1,34 @@
-#include "gwcXetra.h"
+#include "gwcEti.h"
 #include "sbfInterface.h"
 #include "utils.h"
 #include "fields.h"
 
 #include <sstream>
 
-gwcXetraTcpConnectionDelegate::gwcXetraTcpConnectionDelegate (gwcXetra* gwc)
+template <typename CodecT>
+gwcEtiTcpConnectionDelegate<CodecT>::gwcEtiTcpConnectionDelegate (gwcEti<CodecT>* gwc)
     : SbfTcpConnectionDelegate (),
       mGwc (gwc)
 { 
 }
 
+template <typename CodecT>
 void
-gwcXetraTcpConnectionDelegate::onReady ()
+gwcEtiTcpConnectionDelegate<CodecT>::onReady ()
 {
     mGwc->onTcpConnectionReady ();
 }
 
+template <typename CodecT>
 void
-gwcXetraTcpConnectionDelegate::onError ()
+gwcEtiTcpConnectionDelegate<CodecT>::onError ()
 {
     mGwc->onTcpConnectionError ();
 }
 
+template <typename CodecT>
 size_t
-gwcXetraTcpConnectionDelegate::onRead (void* data, size_t size)
+gwcEtiTcpConnectionDelegate<CodecT>::onRead (void* data, size_t size)
 {
     return mGwc->onTcpConnectionRead (data, size);
 }
@@ -32,10 +36,24 @@ gwcXetraTcpConnectionDelegate::onRead (void* data, size_t size)
 extern "C" gwcConnector*
 getConnector (neueda::logger* log, const neueda::properties& props)
 {
-    return new gwcXetra (log);
+    string venue;
+    if (!props.get ("venue", venue))
+    {
+        log->warn ("property venue must be specified");
+        return NULL;
+    }
+
+    if (venue == "xetra")
+        return new gwcEti<xetraCodec> (log);
+    else if (venue == "eurex")
+        return new gwcEti<eurexCodec> (log);
+
+    log->warn ("unknown venue must be eurex/xetra");
+    return NULL;
 }
 
-gwcXetra::gwcXetra (neueda::logger* log) :
+template <typename CodecT>
+gwcEti<CodecT>::gwcEti (neueda::logger* log) :
     gwcConnector (log),
     mTcpConnection (NULL),
     mTcpConnectionDelegate (this),
@@ -55,7 +73,8 @@ gwcXetra::gwcXetra (neueda::logger* log) :
     memset (mCurrentRecoveryEnd, 0x0, sizeof mCurrentRecoveryEnd);
 }
 
-gwcXetra::~gwcXetra ()
+template <typename CodecT>
+gwcEti<CodecT>::~gwcEti ()
 {
     if (mReconnectTimer)
         sbfTimer_destroy (mReconnectTimer);
@@ -73,14 +92,15 @@ gwcXetra::~gwcXetra ()
         sbfMw_destroy (mMw);
 }
 
+template <typename CodecT>
 sbfError
-gwcXetra::cacheFileItemCb (sbfCacheFile file,
+gwcEti<CodecT>::cacheFileItemCb (sbfCacheFile file,
                            sbfCacheFileItem item,
                            void* itemData,
                            size_t itemSize,
                            void* closure)
 {
-    gwcXetra* gwc = reinterpret_cast<gwcXetra*>(closure);
+    gwcEti* gwc = reinterpret_cast<gwcEti*>(closure);
 
     if (itemSize != 16)
     {
@@ -93,8 +113,9 @@ gwcXetra::cacheFileItemCb (sbfCacheFile file,
     return 0;
 }
 
+template <typename CodecT>
 void
-gwcXetra::sendRetransRequest ()
+gwcEti<CodecT>::sendRetransRequest ()
 {
     cdr out;
     char empty[16];
@@ -111,8 +132,9 @@ gwcXetra::sendRetransRequest ()
     sendMsg (out);
 }
 
+template <typename CodecT>
 void
-gwcXetra::updateApplMsgId (string& sMsgId)
+gwcEti<CodecT>::updateApplMsgId (string& sMsgId)
 {
     memcpy (mLastApplMsgId, sMsgId.c_str (), sizeof mLastApplMsgId);
     if (mCacheItem == NULL)
@@ -125,8 +147,9 @@ gwcXetra::updateApplMsgId (string& sMsgId)
     sbfCacheFile_flush (mCacheFile);
 } 
 
+template <typename CodecT>
 void 
-gwcXetra::onTcpConnectionReady ()
+gwcEti<CodecT>::onTcpConnectionReady ()
 {
 	mState = GWC_CONNECTOR_CONNECTED;
 
@@ -161,14 +184,16 @@ gwcXetra::onTcpConnectionReady ()
     mTcpConnection->send (space, used);
 }
 
+template <typename CodecT>
 void 
-gwcXetra::onTcpConnectionError ()
+gwcEti<CodecT>::onTcpConnectionError ()
 {
     error ("tcp dropped connection");
 }
 
+template <typename CodecT>
 size_t 
-gwcXetra::onTcpConnectionRead (void* data, size_t size)
+gwcEti<CodecT>::onTcpConnectionRead (void* data, size_t size)
 {
     size_t left = size;
     cdr    msg;
@@ -198,10 +223,11 @@ gwcXetra::onTcpConnectionRead (void* data, size_t size)
     }
 }
 
+template <typename CodecT>
 void 
-gwcXetra::onHbTimeout (sbfTimer timer, void* closure)
+gwcEti<CodecT>::onHbTimeout (sbfTimer timer, void* closure)
 {
-    gwcXetra* gwc = reinterpret_cast<gwcXetra*>(closure);
+    gwcEti* gwc = reinterpret_cast<gwcEti*>(closure);
 
     cdr hb;
     hb.setInteger (TemplateID, 10011);
@@ -218,24 +244,27 @@ gwcXetra::onHbTimeout (sbfTimer timer, void* closure)
         gwc->error ("missed heartbeats");
 }
 
+template <typename CodecT>
 void 
-gwcXetra::onReconnect (sbfTimer timer, void* closure)
+gwcEti<CodecT>::onReconnect (sbfTimer timer, void* closure)
 {
-    gwcXetra* gwc = reinterpret_cast<gwcXetra*>(closure);
+    gwcEti* gwc = reinterpret_cast<gwcEti*>(closure);
 
     gwc->start (false);
 }
 
+template <typename CodecT>
 void* 
-gwcXetra::dispatchCb (void* closure)
+gwcEti<CodecT>::dispatchCb (void* closure)
 {
-    gwcXetra* gwc = reinterpret_cast<gwcXetra*>(closure);
+    gwcEti* gwc = reinterpret_cast<gwcEti*>(closure);
     sbfQueue_dispatch (gwc->mQueue);
     return NULL;
 }
 
+template <typename CodecT>
 void
-gwcXetra::reset ()
+gwcEti<CodecT>::reset ()
 {
     lock ();
     mOutboundSeqNo = 1;
@@ -259,8 +288,9 @@ gwcXetra::reset ()
     unlock ();
 }
 
+template <typename CodecT>
 void 
-gwcXetra::error (const string& err)
+gwcEti<CodecT>::error (const string& err)
 {
     bool reconnect;
 
@@ -273,14 +303,15 @@ gwcXetra::error (const string& err)
         mLog->info ("reconnecting in 5 secsonds...");
         mReconnectTimer = sbfTimer_create (sbfMw_getDefaultThread (mMw),
                                            mQueue,
-                                           gwcXetra::onReconnect,
+                                           gwcEti::onReconnect,
                                            this,
                                            5.0); 
     }
 }
 
+template <typename CodecT>
 void 
-gwcXetra::handleTcpMsg (cdr& msg)
+gwcEti<CodecT>::handleTcpMsg (cdr& msg)
 {
     int64_t templateId = 0;
     msg.getInteger (TemplateID, templateId);
@@ -304,12 +335,13 @@ gwcXetra::handleTcpMsg (cdr& msg)
         {
             mState = GWC_CONNECTOR_READY;
             mLog->info ("session logon complete");
+            msg.getInteger (PartitionID, mPartition);
             mMessageCbs->onAdmin (1, msg);
             mSessionsCbs->onLoggedOn (1, msg);
 
             mHb = sbfTimer_create (sbfMw_getDefaultThread (mMw),
                                    mQueue,
-                                   gwcXetra::onHbTimeout,
+                                   gwcEti::onHbTimeout,
                                    this,
                                    10.0);
 
@@ -371,13 +403,24 @@ gwcXetra::handleTcpMsg (cdr& msg)
     case 10027:
         handleRetransMeResponse (msg);
         break;
+    case 10101: // order ack
+    case 10107: // modify ack
+    case 10103: // immediate fill
+    case 10104: // book fill
+        handleExchangeMsg (seqnum, msg, templateId);
+        break;
+    case 10010:
+        handleReject (msg);
+        break;
     default:
         mMessageCbs->onMsg (seqnum, msg);
+        break;
     }
 }
 
+template <typename CodecT>
 void
-gwcXetra::handleReject (cdr& msg)
+gwcEti<CodecT>::handleReject (cdr& msg)
 {
     string  rejectText;
     int64_t sessionStatus;
@@ -398,11 +441,12 @@ gwcXetra::handleReject (cdr& msg)
         return error (err.str ());
     }
 
-    mMessageCbs->onMsg (seqnum, msg);
+    mMessageCbs->onOrderRejected (seqnum, msg);
 }
 
+template <typename CodecT>
 void 
-gwcXetra::handleRetransMeResponse (cdr& msg)
+gwcEti<CodecT>::handleRetransMeResponse (cdr& msg)
 {
     string end;
     msg.getInteger (ApplTotalMessageCount, mRecoveryMsgCnt);
@@ -410,16 +454,18 @@ gwcXetra::handleRetransMeResponse (cdr& msg)
     memcpy (mCurrentRecoveryEnd, end.c_str (), sizeof mCurrentRecoveryEnd);
 }
 
+template <typename CodecT>
 void
-gwcXetra::handleTraderLogon (cdr& msg)
+gwcEti<CodecT>::handleTraderLogon (cdr& msg)
 {
     string traderId;
 
     mSessionsCbs->onTraderLogonOn (traderId, msg);
 }
 
+template <typename CodecT>
 void
-gwcXetra::handleLogoffResponse (cdr& msg)
+gwcEti<CodecT>::handleLogoffResponse (cdr& msg)
 {
     int64_t seqnum = 0;
     msg.getInteger (MsgSeqNum, seqnum);
@@ -436,46 +482,40 @@ gwcXetra::handleLogoffResponse (cdr& msg)
     loggedOffEvent ();
 }
 
+template <typename CodecT>
 void
-gwcXetra::handleExecutionMsg (cdr& msg)
+gwcEti<CodecT>::handleExchangeMsg (int seqnum, cdr& msg, const int templateId)
 {
-    uint64_t execType = 0;
-    uint64_t seqno = 0;
-
-    switch (execType)
+    switch (templateId)
     {
-    case '0':
-        mMessageCbs->onOrderAck (seqno, msg);
+    case 10101:
+    case 10107:
+    {
+        if (templateId == 10101)
+            mMessageCbs->onOrderAck (seqnum, msg);
+        else
+            mMessageCbs->onModifyAck (seqnum, msg);
+        string status;
+        msg.getString(OrdStatus, status);
+        if (status.compare("4") == 0)
+            mMessageCbs->onOrderDone (seqnum, msg);
+    }
         break;
-    case '4':
-        mMessageCbs->onOrderDone (seqno, msg);
+    case 10103:
+        mMessageCbs->onOrderAck (seqnum, msg);
+        mMessageCbs->onOrderFill (seqnum, msg);
         break;
-    case '5':
-        mMessageCbs->onModifyAck (seqno, msg);
-        break;
-    case '8':
-        mMessageCbs->onOrderRejected (seqno, msg);
-        break;
-    case 'C':
-        mMessageCbs->onOrderDone (seqno, msg);
-        break;
-    case 'F':
-        mMessageCbs->onOrderFill (seqno, msg);
+    case 10104:
+        mMessageCbs->onOrderFill (seqnum, msg);
         break;
     default:
-        mMessageCbs->onMsg (seqno, msg);
+        break;
     }
 }
 
-void 
-gwcXetra::handleOrderCancelRejectMsg (cdr& msg)
-{
-    uint64_t seqno = 0;
-    mMessageCbs->onCancelRejected (seqno, msg); 
-}
-
+template <typename CodecT>
 bool 
-gwcXetra::init (gwcSessionCallbacks* sessionCbs, 
+gwcEti<CodecT>::init (gwcSessionCallbacks* sessionCbs, 
                 gwcMessageCallbacks* messageCbs,  
                 const neueda::properties& props)
 {
@@ -494,19 +534,14 @@ gwcXetra::init (gwcSessionCallbacks* sessionCbs,
         return false;
     }
 
-    if (!props.get ("partition", v))
+    if (!props.get ("venue", v))
     {
-        mLog->err ("missing propertry partition");
-        return false;
-    }
-    if (!utils_parseNumber (v, mPartition))
-    {
-        mLog->err ("invalid prorpertry partition");
+        mLog->err ("missing propertry venue");
         return false;
     }
 
     string cacheFileName;
-    props.get ("applMsgId_cache", "xetra.applMsgId.cache", cacheFileName);
+    props.get ("applMsgId_cache", v + ".applMsgId.cache", cacheFileName);
     
     int created;
     mCacheFile = sbfCacheFile_open (cacheFileName.c_str (),
@@ -554,7 +589,7 @@ gwcXetra::init (gwcSessionCallbacks* sessionCbs,
     }
 
     // start to dispatch 
-    if (sbfThread_create (&mThread, gwcXetra::dispatchCb, this) != 0)
+    if (sbfThread_create (&mThread, gwcEti::dispatchCb, this) != 0)
     {
         mLog->err ("failed to start dispatch queue");
         return false;
@@ -564,8 +599,9 @@ gwcXetra::init (gwcSessionCallbacks* sessionCbs,
     return true;
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::start (bool reset)
+gwcEti<CodecT>::start (bool reset)
 {
 	if (mTcpConnection != NULL)
 		delete mTcpConnection;
@@ -579,15 +615,16 @@ gwcXetra::start (bool reset)
                                            &mTcpConnectionDelegate);
     if (!mTcpConnection->connect ())
     {
-        mLog->err ("failed to create connection to gateway response server");
+        mLog->err ("failed to create connection to trading gateway");
         return false;
     }
 
     return true;
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::stop ()
+gwcEti<CodecT>::stop ()
 {
     lock ();
     if (mState != GWC_CONNECTOR_READY) // not logged in
@@ -611,8 +648,9 @@ gwcXetra::stop ()
     return true;
 }
 
+template <typename CodecT>
 bool
-gwcXetra::mapOrderFields (gwcOrder& order)
+gwcEti<CodecT>::mapOrderFields (gwcOrder& order)
 {
     if (order.mPriceSet)
         order.setDouble (Price, order.mPrice);
@@ -682,8 +720,9 @@ gwcXetra::mapOrderFields (gwcOrder& order)
     return true;
 }
 
+template <typename CodecT>
 bool
-gwcXetra::sendOrder (gwcOrder& order)
+gwcEti<CodecT>::sendOrder (gwcOrder& order)
 {
     if (!mapOrderFields (order))
         return false;
@@ -691,15 +730,17 @@ gwcXetra::sendOrder (gwcOrder& order)
     return sendOrder ((cdr&)order);
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::sendOrder (cdr& order)
+gwcEti<CodecT>::sendOrder (cdr& order)
 {
     order.setInteger (TemplateID, 10100);
     return sendMsg (order);
 }
 
+template <typename CodecT>
 bool
-gwcXetra::sendCancel (gwcOrder& cancel)
+gwcEti<CodecT>::sendCancel (gwcOrder& cancel)
 {
     if (!mapOrderFields (cancel))
         return false;
@@ -707,15 +748,17 @@ gwcXetra::sendCancel (gwcOrder& cancel)
     return sendCancel ((cdr&)cancel);
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::sendCancel (cdr& cancel)
+gwcEti<CodecT>::sendCancel (cdr& cancel)
 {
     cancel.setInteger (TemplateID, 10109);
     return sendMsg (cancel);
 }
 
+template <typename CodecT>
 bool
-gwcXetra::sendModify (gwcOrder& modify)
+gwcEti<CodecT>::sendModify (gwcOrder& modify)
 {
     if (!mapOrderFields (modify))
         return false;
@@ -723,16 +766,18 @@ gwcXetra::sendModify (gwcOrder& modify)
     return sendModify ((cdr&)modify);
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::sendModify (cdr& modify)
+gwcEti<CodecT>::sendModify (cdr& modify)
 {
     //TODO need to set TemplateID
     //modify.setString (MessageType, GW_XETRA_ORDER_CANCEL_REPLACE_REQUEST);
     return sendMsg (modify);
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::sendMsg (cdr& msg)
+gwcEti<CodecT>::sendMsg (cdr& msg)
 {
     char space[1024];
     size_t used;
@@ -740,7 +785,7 @@ gwcXetra::sendMsg (cdr& msg)
     int64_t templateId;
 
     // use a codec from the stack gets around threading issues
-    xetraCodec codec;
+    CodecT codec;
 
     lock ();
     if (mState != GWC_CONNECTOR_READY)
@@ -770,8 +815,9 @@ gwcXetra::sendMsg (cdr& msg)
     return true;
 }
 
+template <typename CodecT>
 bool
-gwcXetra::sendRaw (void* data, size_t len)
+gwcEti<CodecT>::sendRaw (void* data, size_t len)
 {
     if (!mRawEnabled)
     {
@@ -792,8 +838,9 @@ gwcXetra::sendRaw (void* data, size_t len)
     return true;
 }
 
+template <typename CodecT>
 bool 
-gwcXetra::traderLogon (string& traderId, const cdr* msg)
+gwcEti<CodecT>::traderLogon (string& traderId, const cdr* msg)
 {
     if (msg == NULL)
     {
@@ -818,3 +865,10 @@ gwcXetra::traderLogon (string& traderId, const cdr* msg)
     return sendMsg (tlogon);
 }
 
+// xetra
+template class gwcEti<neueda::xetraCodec>;
+template class gwcEtiTcpConnectionDelegate<neueda::xetraCodec>;
+
+// eurex
+template class gwcEti<neueda::eurexCodec>;
+template class gwcEtiTcpConnectionDelegate<neueda::eurexCodec>;

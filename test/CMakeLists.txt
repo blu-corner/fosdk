@@ -1,6 +1,7 @@
 include_directories(
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/src/millennium
+    ${PROJECT_SOURCE_DIR}/src/eti
     ${CMAKE_INSTALL_PREFIX}/include
     ${CMAKE_INSTALL_PREFIX}/include/logger
     ${CMAKE_INSTALL_PREFIX}/include/properties
@@ -11,6 +12,9 @@ include_directories(
     ${CMAKE_INSTALL_PREFIX}/include/sbf/cpp
     ${CMAKE_INSTALL_PREFIX}/include/codec/fields
     ${CMAKE_INSTALL_PREFIX}/include/codec/fields
+    ${CMAKE_INSTALL_PREFIX}/include/codec/eti
+    ${CMAKE_INSTALL_PREFIX}/include/codec/eti/eurex
+    ${CMAKE_INSTALL_PREFIX}/include/codec/eti/xetra
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/lse
     ${CMAKE_INSTALL_PREFIX}/include/codec/millennium/lse/packets
@@ -33,6 +37,8 @@ link_directories(
 set (TEST_SOURCES
      "${PROJECT_SOURCE_DIR}/test/testrunner.cpp"
      "${PROJECT_SOURCE_DIR}/test/TestLseMillenniumConnector.cpp"
+     "${PROJECT_SOURCE_DIR}/test/TestXetraEtiConnector.cpp"
+     "${PROJECT_SOURCE_DIR}/test/TestEurexEtiConnector.cpp"
 )
 
 add_executable(unittest ${TEST_SOURCES})
@@ -45,8 +51,11 @@ target_link_libraries(unittest
   oslocodec
   jsecodec
   borsacodec
+  xetracodec
+  eurexcodec
   gwc
   gwcmillennium
+  gwceti
   gtest
   gmock
   pthread
