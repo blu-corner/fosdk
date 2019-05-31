@@ -2,6 +2,7 @@
 
 #include "gwcConnector.h"
 #include "fields.h"
+#include "optiqCodec.h"
 #include "optiqConstants.h"
 #include "optiqNewOrderPacket.h"
 
@@ -64,17 +65,34 @@ public:
     virtual void onAdmin (uint64_t seqno, const cdr& msg)
     {
         mLog->info ("onAdmin msg...");
-        mLog->info ("%s", msg.toString ().c_str ());
     }
 
     virtual void onRawMsg (uint64_t seqno, const void* data, size_t len)
     {
         // TODO: add raw handling
-        mLog->info ("onRawMsg received (%lu bytes) ...", len);
+        mLog->info ("onRawMsg received - [seqnum: %lu] (%lu bytes) ...", seqno, len);
+
+        cdr msg;
+        size_t _;
+
+        switch (mCodec.decode(msg, data, len, _))
+        {
+        case GW_CODEC_SUCCESS:
+            mLog->info(msg.toString().c_str());
+            break;
+
+        case GW_CODEC_ERROR:
+            mLog->err("unable to parse inbound msg");
+            break;
+
+        default:
+            break;
+        }
     }
 
     gwcConnector* mGwc;
     logger* mLog;
+    optiqCodec mCodec;
 };
 
 int main (int argc, char** argv)
@@ -95,6 +113,7 @@ int main (int argc, char** argv)
     props.setProperty ("host", "127.0.0.1:9999");
     props.setProperty ("partition", "10");
     props.setProperty ("accessId", "1024");
+    props.setProperty ("enable_raw_messages", "yes");
 
     logger* log = logService::getLogger ("OPTIQ_TEST");
 
@@ -128,7 +147,6 @@ int main (int argc, char** argv)
 
     optiqNewOrderPacket msg;
 
-    msg.setClMsgSeqNum (1);
     msg.setFirmID ("00099022");
     msg.setSendingTime (ts);
     msg.setClientOrderID (time (NULL));

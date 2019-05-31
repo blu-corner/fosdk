@@ -197,9 +197,14 @@ gwcOptiq::onTcpConnectionRead (void* data, size_t size)
 
             uint16_t seqNum = *reinterpret_cast<uint16_t*>(
                 static_cast<char*>(data) + sizeof(optiqMessageHeaderPacket) + 2);
+
+            mSeqnums.mInbound = seqNum;
+            mSeenHb = true;
             
             mMessageCbs->onRawMsg(seqNum, data, frameLength);
+
             data = reinterpret_cast<char*>(data) + frameLength;
+            left -= frameLength;
         }
 
         return size - left;
@@ -893,7 +898,15 @@ gwcOptiq::sendRaw (void* data, size_t len)
         return false;
     }
  
+    // set sequence number, to ensure admin msgs remain in sync
+    
+    uint16_t* seqNum = reinterpret_cast<uint16_t*>(
+        static_cast<char*>(data) + sizeof(optiqMessageHeaderPacket) + 2);
+
+    *seqNum = ++mSeqnums.mOutbound;
+
     mTcpConnection->send (data, len);
+
     unlock ();
     return true;
 }
