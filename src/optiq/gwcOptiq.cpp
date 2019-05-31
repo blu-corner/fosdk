@@ -1,5 +1,6 @@
 #include "gwcOptiq.h"
 #include "optiqConstants.h"
+#include "optiqPackets.h"
 #include "sbfInterface.h"
 #include "utils.h"
 #include "fields.h"
@@ -147,11 +148,66 @@ size_t
 gwcOptiq::onTcpConnectionRead (void* data, size_t size)
 {
     size_t left = size;
-    cdr    msg;
+    cdr msg;
+
+    if (mRawEnabled)
+    {
+        while (left > 0)
+        {
+            if (left < sizeof(uint16_t))
+            {
+                return size - left;
+            }
+            
+            uint16_t frameLength = *static_cast<uint16_t*>(data);
+            
+            if (left < frameLength)
+            {
+                return size - left;
+            }
+
+            optiqMessageHeaderPacket* header = reinterpret_cast<optiqMessageHeaderPacket*>(
+                static_cast<unsigned char*>(data) + sizeof(uint16_t));
+
+            if (isSessionMessage(header->getTemplateId()))
+            {
+                size_t used = 0;
+                switch(mCodec.decode (msg, data, left, used))
+                { 
+                    case GW_CODEC_ERROR:
+                        mLog->err ("failed to decode message codec error");
+                        return size - left;
+
+                    case GW_CODEC_SHORT:
+                        return size - left;
+
+                    case GW_CODEC_ABORT:
+                        mLog->err ("failed to decode message");
+                        return size;
+
+                    case GW_CODEC_SUCCESS:
+                        handleTcpMsg (msg);
+                        left -= used;
+                        break;
+                }
+
+                data = reinterpret_cast<char*>(data) + used; 
+                continue;
+            }
+
+            uint16_t seqNum = *reinterpret_cast<uint16_t*>(
+                static_cast<char*>(data) + sizeof(optiqMessageHeaderPacket) + 2);
+            
+            mMessageCbs->onRawMsg(seqNum, data, frameLength);
+            data = reinterpret_cast<char*>(data) + frameLength;
+        }
+
+        return size - left;
+    }
 
     while (left > 0)
     {
-        size_t used;
+        size_t used = 0;
         switch (mCodec.decode (msg, data, left, used))
         {
         case GW_CODEC_ERROR:
@@ -458,6 +514,24 @@ gwcOptiq::handleRejectMsg (int64_t seqno, cdr& msg)
         mMessageCbs->onModifyRejected (seqno, msg);
     else if (rejMsgId == OptiqCancelRequestTemplateId)
         mMessageCbs->onCancelRejected (seqno, msg);
+}
+
+bool
+gwcOptiq::isSessionMessage (uint16_t templateId)
+{
+    switch (templateId)
+    {
+    case OptiqHeartbeatTemplateId:
+    case OptiqLogonAckTemplateId:
+    case OptiqLogonRejectTemplateId:
+    case OptiqLogoutTemplateId:
+    case OptiqTestRequestTemplateId:
+    case OptiqTechnicalRejectTemplateId:
+        return true;
+
+    default:
+        return false;
+    }
 }
 
 bool 
@@ -812,7 +886,6 @@ gwcOptiq::sendRaw (void* data, size_t len)
 
     lock ();
 
-    /* XXX need to setup seqnum */
     if (mState != GWC_CONNECTOR_READY)
     {
         mLog->warn ("gwc not ready to send messages");

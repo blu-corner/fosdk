@@ -106,6 +106,8 @@ private:
     void handleKillMsg (int64_t seqno, cdr& msg);
     void handleRejectMsg (int64_t seqno, cdr& msg);
 
+    static bool isSessionMessage (uint16_t templateId);
+
     static void* dispatchCb (void* closure);
     static sbfError cacheFileItemCb (sbfCacheFile file, 
                                      sbfCacheFileItem item, 
