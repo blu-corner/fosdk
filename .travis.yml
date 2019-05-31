@@ -11,6 +11,8 @@ addons:
 
 before_install:
     - git submodule update --init
+    - sudo apt-get update
+    - sudo apt-get install -y libxml2-dev
 
 before_script:
     - wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
