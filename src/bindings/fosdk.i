@@ -9,7 +9,7 @@
 #include "gwcCommon.h"
 #include "gwcConnector.h"
 
-#include "../../ext/codec/src/bindings/codecBuffer.h"
+#include "bindings/codecBuffer.h"
 %}
 
 %include "std_string.i"
