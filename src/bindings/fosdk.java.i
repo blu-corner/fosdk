@@ -1,6 +1,11 @@
 // binary interfaces
 %include "cstring.i"
 
+// Fix to improve callback performance
+%insert("runtime") %{
+#define SWIG_JAVA_NO_DETACH_CURRENT_THREAD
+%}
+
 %pragma(java) jniclasscode=%{
      // jniclasscode pragma code: Static block so that the JNI class loads the C++ DLL/shared object when the class is loaded
      static {
