@@ -115,6 +115,23 @@ gwcEti<CodecT>::cacheFileItemCb (sbfCacheFile file,
 
 template <typename CodecT>
 void
+gwcEti<CodecT>::sendTraderLogonRequest ()
+{
+    cdr out;
+    char empty[16];
+    memset (empty, 0x0, sizeof empty);
+    string start (mLastApplMsgId, 16); 
+
+    out.setInteger (TemplateID, 10018);
+    out.setInteger (Username, 123456789); // XXX no value
+    out.setInteger (SenderSubID, 123456789);
+    out.setString (Password, "password");
+    // aways want to the end            
+    sendMsg (out);
+}
+
+template <typename CodecT>
+void
 gwcEti<CodecT>::sendRetransRequest ()
 {
     cdr out;
@@ -184,6 +201,43 @@ gwcEti<CodecT>::onTcpConnectionReady ()
     mTcpConnection->send (space, used);
 }
 
+/*template <typename CodecT>
+void 
+gwcEti<CodecT>::onTcpConnectionReady ()
+{
+	mState = GWC_CONNECTOR_CONNECTED;
+
+    cdr d;
+
+	// session logon 
+	d.setInteger (TemplateID, 10000);
+	d.setInteger (MsgSeqNum, mOutboundSeqNo);
+	d.setInteger (HeartBtInt, 10000);
+	d.setString (DefaultCstmApplVerID, "7.1");
+	d.setString (ApplUsageOrders, "A");
+	d.setString (ApplUsageQuotes, "N");
+	d.setString (OrderRoutingIndicator, "Y");
+	d.setString (FIXEngineName, "Blucorner");
+	d.setString (FIXEngineVersion, "1");
+	d.setString (FIXEngineVendor, "Blucorner");
+
+	// need ApplicationSystemName, ApplicationSystemVersion,
+	// ApplicationSystemVendor,  PartyIDSessionID, Password
+	
+	mSessionsCbs->onLoggingOn (d);
+
+    char space[1024];
+    size_t used;
+    if (mCodec.encode (d, space, sizeof space, used) != GW_CODEC_SUCCESS)
+    {
+        mLog->err ("failed to construct logon message [%s]",
+                   mCodec.getLastError ().c_str ());
+        return;
+    }
+
+    mTcpConnection->send (space, used);
+}
+*/
 template <typename CodecT>
 void 
 gwcEti<CodecT>::onTcpConnectionError ()
@@ -344,11 +398,11 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
                                    gwcEti::onHbTimeout,
                                    this,
                                    10.0);
-
+            
+            sendTraderLogonRequest ();
             /* send retrans request */
-            sendRetransRequest ();
+            //sendRetransRequest ();
 
-            loggedOnEvent ();
         }
         /* rejected logon */ 
         else if (templateId == 10010)
@@ -461,6 +515,7 @@ gwcEti<CodecT>::handleTraderLogon (cdr& msg)
     string traderId;
 
     mSessionsCbs->onTraderLogonOn (traderId, msg);
+    loggedOnEvent ();
 }
 
 template <typename CodecT>

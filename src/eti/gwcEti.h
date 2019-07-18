@@ -15,6 +15,18 @@
 using namespace std;
 using namespace neueda;
 
+struct gwcXetraSeqNum
+{
+    uint64_t mParitionId;
+    uint64_t mSeqno;    
+};
+
+struct gwcXetraCacheItem
+{
+    sbfCacheFileItem    mItem;
+    gwcXetraSeqNum mData;
+};
+
 template <typename CodecT> class gwcEti;
 template <typename CodecT>
 class gwcEtiTcpConnectionDelegate : public SbfTcpConnectionDelegate
@@ -40,6 +52,8 @@ class gwcEti : public gwcConnector
     friend class gwcEtiTcpConnectionDelegate<CodecT>;
     
 public:
+    typedef map<uint64_t, gwcXetraCacheItem*> gwcXetraCacheMap;
+
     gwcEti (neueda::logger* log);
     virtual ~gwcEti ();
 
@@ -77,9 +91,11 @@ protected:
 
 private:   
     // utility methods
+    void updateSeqno (uint64_t partId, uint64_t seqno);
     void reset ();
     void error (const string& err);
     void sendRetransRequest ();
+    void sendTraderLogonRequest ();
     void updateApplMsgId (string& sMsgId);
     bool mapOrderFields (gwcOrder& gwc);
 
@@ -108,6 +124,7 @@ private:
     static void onHbTimeout (sbfTimer timer, void* closure);
     static void onReconnect (sbfTimer timer, void* closure);
 
+    gwcXetraCacheMap mCacheMap;
     // members 
     sbfTcpConnectionAddress mTcpHost;
     bool                    mDispatching;
