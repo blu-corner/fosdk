@@ -91,7 +91,7 @@ protected:
 
 private:   
     // utility methods
-    void updateSeqno (uint64_t partId, uint64_t seqno);
+    void updateSeqNo (uint64_t partId, uint64_t seqno);
     void reset ();
     void error (const string& err);
     void sendRetransRequest ();

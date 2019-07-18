@@ -308,6 +308,31 @@ gwcEti<CodecT>::onReconnect (sbfTimer timer, void* closure)
 }
 
 template <typename CodecT>
+void
+gwcEti<CodecT>::updateSeqNo (uint64_t partId, uint64_t seqno)
+{
+    gwcXetraCacheMap::iterator itr = mCacheMap.find (partId);
+
+    if (itr != mCacheMap.end ())
+    {
+        itr->second->mData.mSeqno = seqno;
+        sbfCacheFile_write (itr->second->mItem, &itr->second->mData);
+        sbfCacheFile_flush (mCacheFile);
+        return;
+    }
+
+    // haven't seen this partition before so add it
+    gwcXetraCacheItem* ci = new gwcXetraCacheItem ();
+    ci->mData.mSeqno = seqno;
+    ci->mData.mParitionId = partId;
+    ci->mItem = sbfCacheFile_add (mCacheFile, &ci->mData);
+
+    mCacheMap[partId] = ci;
+    sbfCacheFile_flush (mCacheFile);
+
+}
+
+template <typename CodecT>
 void* 
 gwcEti<CodecT>::dispatchCb (void* closure)
 {
@@ -369,6 +394,10 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
 {
     int64_t templateId = 0;
     msg.getInteger (TemplateID, templateId);
+    
+    uint64_t seqno;
+    msg.getInteger (SequenceNo, seqno);
+    updateSeqNo(mPartition, seqno);
 
     mLog->info ("msg in..");
     mLog->info ("%s", msg.toString ().c_str ());
