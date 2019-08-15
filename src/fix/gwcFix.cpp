@@ -283,7 +283,7 @@ gwcFix::getTime (cdrDateTime& dt)
     dt.mSecond = tmp->tm_sec;
 
     if (gettimeofday (&tv, NULL) == 0)
-        dt.mMillisecond = (int)tv.tv_usec / 1000;
+        dt.mNanosecond = (int)tv.tv_usec * 1000;
 }
 
 void
