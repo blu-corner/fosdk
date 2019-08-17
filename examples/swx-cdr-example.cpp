@@ -156,7 +156,7 @@ int main (int argc, char** argv)
     }
 
     properties props (p, "gwc", "soupbin", "sim");
-    props.setProperty ("host", "127.0.0.1:9001");
+    props.setProperty ("host", "127.0.0.1:8999");
 
     logger* log = logService::getLogger ("SWX_TEST");
 

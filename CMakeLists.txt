@@ -118,14 +118,18 @@ endif()
 find_library(EVENT_LIB
   NAMES event
   HINTS "${CMAKE_INSTALL_PREFIX}/lib"
-)
+  )
 find_library(EVENT_PTHREAD_LIB
   NAMES event_pthreads
   HINTS "${CMAKE_INSTALL_PREFIX}/lib"
-)
+  )
+find_path(EVENT_INCLUDE_DIR event2/event.h
+  PATHS "${CMAKE_INSTALL_PREFIX}/include")
 if(EVENT_LIB AND EVENT_PTHREAD_LIB)
   message(STATUS "event-found: " ${EVENT_LIB})
   message(STATUS "event-pthread-found: " ${EVENT_PTHREAD_LIB})
+  message(STATUS "event-headers-found: " ${EVENT_INCLUDE_DIR})
+  include_directories(${EVENT_INCLUDE_DIR})
  else()
   set(EVENT_CMAKE ${SUBMODULE_ROOT_DIR}/ext/libevent CACHE PATH "Location of libevent-cmake" FORCE)
   message(STATUS "libevent-location: " ${EVENT_CMAKE})
@@ -221,6 +225,21 @@ ExternalProject_Get_Property(CODEC_PROJECT binary_dir)
 set(CODEC_PROJECT_DIR ${binary_dir}/lib/cmake/codec CACHE PATH "location of codec cmake files" FORCE)
 set(CPACK_INSTALL_CMAKE_PROJECTS ${CPACK_INSTALL_CMAKE_PROJECTS} "${binary_dir};codec;ALL;/")
 add_dependencies(CODEC_PROJECT SBF_PROJECT PROPERTIES_PROJECT LOGGER_PROJECT CDR_PROJECT UTILS_PROJECT)
+
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/src/
+  ${CMAKE_INSTALL_PREFIX}/include
+  ${CMAKE_INSTALL_PREFIX}/include/cdr
+  ${CMAKE_INSTALL_PREFIX}/include/codec
+  ${CMAKE_INSTALL_PREFIX}/include/codec/fields
+  ${CMAKE_INSTALL_PREFIX}/include/codec/optiq/packets
+  ${CMAKE_INSTALL_PREFIX}/include/properties
+  ${CMAKE_INSTALL_PREFIX}/include/logger
+  ${CMAKE_INSTALL_PREFIX}/include/sbf
+  ${CMAKE_INSTALL_PREFIX}/include/sbf/cpp
+  ${CMAKE_INSTALL_PREFIX}/include/utils
+  )
 
 if (EXAMPLES)
     add_subdirectory(examples)

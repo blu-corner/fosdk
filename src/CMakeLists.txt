@@ -7,24 +7,6 @@ set (SOURCES
   gwcConnector.cpp
   )
 
-link_directories(
-    ${CMAKE_INSTALL_PREFIX}/lib
-    )
-
-include_directories(
-    ${PROJECT_SOURCE_DIR}/src/
-    ${CMAKE_INSTALL_PREFIX}/include
-    ${CMAKE_INSTALL_PREFIX}/include/cdr
-    ${CMAKE_INSTALL_PREFIX}/include/codec
-    ${CMAKE_INSTALL_PREFIX}/include/codec/fields
-    ${CMAKE_INSTALL_PREFIX}/include/codec/optiq/packets
-    ${CMAKE_INSTALL_PREFIX}/include/properties
-    ${CMAKE_INSTALL_PREFIX}/include/logger
-    ${CMAKE_INSTALL_PREFIX}/include/sbf
-    ${CMAKE_INSTALL_PREFIX}/include/sbf/cpp
-    ${CMAKE_INSTALL_PREFIX}/include/utils
-  )
-
 add_library (gwc SHARED ${SOURCES})
 target_link_libraries (gwc cdr utils properties logger sbfcore sbfcommon sbfnetwork)
 
