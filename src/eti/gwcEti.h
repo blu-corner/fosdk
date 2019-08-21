@@ -15,16 +15,16 @@
 using namespace std;
 using namespace neueda;
 
-struct gwcXetraSeqNum
+struct gwcXetraApplMsgId
 {
     uint64_t mParitionId;
-    uint64_t mSeqno;    
+    char mApplMsgId[16];    
 };
 
 struct gwcXetraCacheItem
 {
-    sbfCacheFileItem    mItem;
-    gwcXetraSeqNum mData;
+    sbfCacheFileItem mItem;
+    gwcXetraApplMsgId mData;
 };
 
 template <typename CodecT> class gwcEti;
@@ -65,7 +65,7 @@ public:
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL); 
+    virtual bool traderLogon (const cdr* msg);
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
@@ -91,12 +91,11 @@ protected:
 
 private:   
     // utility methods
-    void updateSeqNo (uint64_t partId, uint64_t seqno);
+    void updateSeqNo (uint64_t seqno);
+    void updateApplMsgId (uint64_t partId, string& sMsgId);
     void reset ();
     void error (const string& err);
     void sendRetransRequest ();
-    void sendTraderLogonRequest ();
-    void updateApplMsgId (string& sMsgId);
     bool mapOrderFields (gwcOrder& gwc);
 
     // handle state
@@ -110,6 +109,7 @@ private:
     void handleReject (cdr& msg);
     void handleRetransMeResponse (cdr& msg);
     void handleTraderLogon (cdr& msg);
+    void handleTraderLogoffResponse (cdr& msg);
     void handleLogoffResponse (cdr& msg);
     void handleExchangeMsg (int, cdr& msg, const int); 
     void handleOrderCancelRejectMsg (cdr& msg);
@@ -133,7 +133,7 @@ private:
     CodecT                  mCodec;
     bool                    mSeenHb;
     int                     mMissedHb;
-    uint64_t                mOutboundSeqNo;
+    uint64_t                mSeqNo;
     int64_t                 mPartition;
     char                    mLastApplMsgId[16];
     char                    mCurrentRecoveryEnd[16];
