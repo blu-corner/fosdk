@@ -876,7 +876,7 @@ gwcFix::mapOrderFields (gwcOrder& order)
 }
 
 bool
-gwcFix::traderLogon (string& traderId, const cdr* msg)
+gwcFix::traderLogon (const cdr* msg)
 {
     // TODO traderLogon needs looked at
     return true;

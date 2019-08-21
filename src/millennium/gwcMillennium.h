@@ -118,7 +118,7 @@ public:
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL) {return false;}
+    virtual bool traderLogon (const cdr* msg) {return false;}
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    

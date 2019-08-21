@@ -34,7 +34,13 @@ public:
     virtual void onLoggedOn (uint64_t seqno, const cdr& msg) = 0;
 
     /* Trader logon completed */
-    virtual void onTraderLogonOn (std::string traderId, const cdr& msg) {};
+    virtual void onTraderLoggedOn (const cdr& msg) {};
+
+    /* Logoff completed, same to destroy session */
+    virtual void onTraderLoggedOff (const cdr& msg) {};
+
+    /* Trader Logoff message is going to be send to exchange, can add extra fields to msg */
+    virtual void onTraderLoggingOff (cdr& msg) {};
 
     /* Logoff completed, same to destroy session */
     virtual void onLoggedOff (uint64_t seqno, const cdr& msg) = 0;
@@ -87,8 +93,10 @@ typedef enum
     GWC_CONNECTOR_INIT,
     GWC_CONNECTOR_CONNECTED,
     GWC_CONNECTOR_WAITING_LOGON,
+    GWC_CONNECTOR_WAITING_TRADER_LOGON,
     GWC_CONNECTOR_READY,
-    GWC_CONNECTOR_WAITING_LOGOFF
+    GWC_CONNECTOR_WAITING_LOGOFF,
+    GWC_CONNECTOR_WAITING_TRADER_LOGOFF
 } gwcConnectorState;
 
 /* Generic connector, create using factory */
@@ -134,7 +142,7 @@ public:
     virtual bool stop () = 0;
 
     /* Logon a trader if supported by exchnage */
-    virtual bool traderLogon (std::string& traderId, const cdr* msg = NULL) = 0;
+    virtual bool traderLogon (const cdr* msg) = 0;
 
     /* Send a order */
     virtual bool sendOrder (cdr& order) = 0;
@@ -176,16 +184,55 @@ public:
         }     
     } 
 
+    /* wait for trader logon event */
+    void waitForTraderLogon ()
+    {
+        while (mTraderLoggedOn == 0)
+        {
+            sbfMutex_lock (&mEventMutex);
+            sbfCondVar_wait (&mEventCond, &mEventMutex);
+            sbfMutex_unlock (&mEventMutex);
+        }     
+    } 
+
+    /* wait for trader logoff event */
+    void waitForTraderLogoff ()
+    {
+        while (mTraderLoggedOn == 1)
+        {
+            sbfMutex_lock (&mEventMutex);
+            sbfCondVar_wait (&mEventCond, &mEventMutex);
+            sbfMutex_unlock (&mEventMutex);
+        }     
+    } 
+
 protected:
     void reset ()
     {
         mState = GWC_CONNECTOR_INIT;
         mLoggedOn = 0;
+        mTraderLoggedOn = 0;
     }
     
     void loggedOnEvent ()
     {
         mLoggedOn = 1;
+        sbfMutex_lock (&mEventMutex);
+        sbfCondVar_signal (&mEventCond);
+        sbfMutex_unlock (&mEventMutex);
+    }
+
+    void traderLoggedOnEvent ()
+    {
+        mTraderLoggedOn = 1;
+        sbfMutex_lock (&mEventMutex);
+        sbfCondVar_signal (&mEventCond);
+        sbfMutex_unlock (&mEventMutex);
+    }
+
+    void traderLoggedOffEvent ()
+    {
+        mTraderLoggedOn = 0;
         sbfMutex_lock (&mEventMutex);
         sbfCondVar_signal (&mEventCond);
         sbfMutex_unlock (&mEventMutex);
@@ -216,6 +263,7 @@ protected:
     gwcMessageCallbacks* mMessageCbs;
     gwcConnectorState    mState;
     u_int                mLoggedOn;
+    u_int                mTraderLoggedOn;
     bool                 mRawEnabled;
 
 private:

@@ -39,7 +39,7 @@ public:
 
     }
 
-    virtual void onTraderLogonOn (std::string traderId, const cdr& msg)
+    virtual void onTraderLogonOn (const cdr& msg)
     {
         mLog->info ("trader logged on...");
     }
@@ -47,6 +47,19 @@ public:
     virtual void onLoggedOff (uint64_t seqno, const cdr& msg) 
     {
         mLog->info ("session logged off...");
+    }
+
+    virtual void onTraderLoggingOff (cdr& msg)
+    {
+        //static bool response = false;
+        mLog->info ("trader logging on...");
+        
+        msg.setInteger (Username, 123456789);
+    }
+
+    virtual void onTraderLoggedOff (uint64_t seqno, const cdr& msg) 
+    {
+        mLog->info ("trader logged off...");
     }
 
     virtual void onGap (uint64_t expected, uint64_t recieved)
@@ -169,9 +182,10 @@ int main (int argc, char** argv)
     cdr traderLogon;
     traderLogon.setInteger (Username, 123456789);
     traderLogon.setString (Password, "password");
-    string id ("123456789");
-    if (gwc->traderLogon (id, &traderLogon) == false)
+    if (gwc->traderLogon (&traderLogon) == false)
         errx (1, "failed to send trader logon");
+
+    gwc->waitForTraderLogon ();
 #if 0
     /* uncomment to test multiple trader login, trader logout */
     if (gwc->traderLogon (id, &traderLogon) == false)
