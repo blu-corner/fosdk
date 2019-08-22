@@ -58,7 +58,7 @@ public:
     virtual ~gwcEti ();
 
     virtual bool init (gwcSessionCallbacks* sessionCbs,
-                       gwcMessageCallbacks* messageCbs, 
+                       gwcMessageCallbacks* messageCbs,
                        const neueda::properties& props);
 
     virtual bool start (bool reset);
@@ -79,7 +79,7 @@ public:
     virtual bool sendMsg (cdr& msg);
     virtual bool sendRaw (void* data, size_t len);
 
-protected:
+protected: 
     SbfTcpConnection*             mTcpConnection;
     gwcEtiTcpConnectionDelegate<CodecT> mTcpConnectionDelegate;
 
@@ -111,15 +111,15 @@ private:
     void handleTraderLogon (cdr& msg);
     void handleTraderLogoffResponse (cdr& msg);
     void handleLogoffResponse (cdr& msg);
-    void handleExchangeMsg (int, cdr& msg, const int); 
+    void handleExchangeMsg (int, cdr& msg, const int);
     void handleOrderCancelRejectMsg (cdr& msg);
 
 
     static void* dispatchCb (void* closure);
-    static sbfError cacheFileItemCb (sbfCacheFile file, 
-                                     sbfCacheFileItem item, 
-                                     void* itemData, 
-                                     size_t itemSize, 
+    static sbfError cacheFileItemCb (sbfCacheFile file,
+                                     sbfCacheFileItem item,
+                                     void* itemData,
+                                     size_t itemSize,
                                      void* closure);
     static void onHbTimeout (sbfTimer timer, void* closure);
     static void onReconnect (sbfTimer timer, void* closure);
@@ -134,7 +134,6 @@ private:
     bool                    mSeenHb;
     int                     mMissedHb;
     uint64_t                mSeqNo;
-    int64_t                 mPartition;
     char                    mLastApplMsgId[16];
     char                    mCurrentRecoveryEnd[16];
     int64_t                 mRecoveryMsgCnt;

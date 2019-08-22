@@ -120,16 +120,19 @@ gwcEti<CodecT>::sendRetransRequest ()
     cdr out;
     char empty[16];
     memset (empty, 0x0, sizeof empty);
-    string start (mCacheMap[mPartition]->mData.mApplMsgId, 16); 
+    for(auto it = mCacheMap.begin(); it != mCacheMap.end(); ++it)
+    {
+        string start (it->second->mData.mApplMsgId, 16); 
 
-    out.setInteger (TemplateID, 10026);
-    out.setInteger (SubscriptionScope, 0); // XXX no value
-    out.setInteger (PartitionID, mPartition);
-    out.setInteger (RefApplID, 4); // session data
-    if (mCacheItem != NULL)
-        out.setString (ApplBegMsgID, start);
-    // aways want to the end            
-    sendMsg (out);
+        out.setInteger (TemplateID, 10026);
+        out.setInteger (SubscriptionScope, 0); // XXX no value
+        out.setInteger (PartitionID, it->first);
+        out.setInteger (RefApplID, 4); // session data
+        if (mCacheItem != NULL)
+            out.setString (ApplBegMsgID, start);
+        // aways want to the end            
+        sendMsg (out);
+    }
 }
 
 template <typename CodecT>
@@ -367,7 +370,6 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
         {
             mState = GWC_CONNECTOR_READY;
             mLog->info ("session logon complete");
-            msg.getInteger (PartitionID, mPartition);
             mMessageCbs->onAdmin (1, msg);
             mSessionsCbs->onLoggedOn (1, msg);
             loggedOnEvent();
@@ -395,7 +397,9 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
 
     if (msg.getString (ApplMsgID, applMsgId))
     {
-        updateApplMsgId (mPartition ,applMsgId);
+        uint16_t partitionId;
+        msg.getInteger (PartitionID, partitionId);
+        updateApplMsgId (partitionId ,applMsgId);
         if (ApplResendFlag == 1)
         {
             mRecoveryMsgCnt--;
