@@ -193,43 +193,6 @@ gwcEti<CodecT>::onTcpConnectionReady ()
     mTcpConnection->send (space, used);
 }
 
-/*template <typename CodecT>
-void 
-gwcEti<CodecT>::onTcpConnectionReady ()
-{
-	mState = GWC_CONNECTOR_CONNECTED;
-
-    cdr d;
-
-	// session logon 
-	d.setInteger (TemplateID, 10000);
-	d.setInteger (MsgSeqNum, mSeqNo);
-	d.setInteger (HeartBtInt, 10000);
-	d.setString (DefaultCstmApplVerID, "7.1");
-	d.setString (ApplUsageOrders, "A");
-	d.setString (ApplUsageQuotes, "N");
-	d.setString (OrderRoutingIndicator, "Y");
-	d.setString (FIXEngineName, "Blucorner");
-	d.setString (FIXEngineVersion, "1");
-	d.setString (FIXEngineVendor, "Blucorner");
-
-	// need ApplicationSystemName, ApplicationSystemVersion,
-	// ApplicationSystemVendor,  PartyIDSessionID, Password
-	
-	mSessionsCbs->onLoggingOn (d);
-
-    char space[1024];
-    size_t used;
-    if (mCodec.encode (d, space, sizeof space, used) != GW_CODEC_SUCCESS)
-    {
-        mLog->err ("failed to construct logon message [%s]",
-                   mCodec.getLastError ().c_str ());
-        return;
-    }
-
-    mTcpConnection->send (space, used);
-}
-*/
 template <typename CodecT>
 void 
 gwcEti<CodecT>::onTcpConnectionError ()
