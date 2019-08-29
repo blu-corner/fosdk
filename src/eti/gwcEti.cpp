@@ -120,13 +120,14 @@ gwcEti<CodecT>::sendRetransRequest ()
     cdr out;
     char empty[16];
     memset (empty, 0x0, sizeof empty);
-    for(auto it = mCacheMap.begin(); it != mCacheMap.end(); ++it)
+    gwcXetraCacheMap::iterator itr;
+    for(itr = mCacheMap.begin(); itr != mCacheMap.end(); ++itr)
     {
-        string start (it->second->mData.mApplMsgId, 16); 
+        string start (itr->second->mData.mApplMsgId, 16);
 
         out.setInteger (TemplateID, 10026);
         out.setInteger (SubscriptionScope, 0); // XXX no value
-        out.setInteger (PartitionID, it->first);
+        out.setInteger (PartitionID, itr->first);
         out.setInteger (RefApplID, 4); // session data
         if (mCacheItem != NULL)
             out.setString (ApplBegMsgID, start);
