@@ -57,7 +57,7 @@ public:
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL)
+    virtual bool traderLogon (const cdr* msg)
     {
         /* no trader logon */
         return false;

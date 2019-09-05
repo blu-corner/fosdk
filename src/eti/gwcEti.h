@@ -15,6 +15,18 @@
 using namespace std;
 using namespace neueda;
 
+struct gwcXetraApplMsgId
+{
+    uint64_t mParitionId;
+    char mApplMsgId[16];    
+};
+
+struct gwcXetraCacheItem
+{
+    sbfCacheFileItem mItem;
+    gwcXetraApplMsgId mData;
+};
+
 template <typename CodecT> class gwcEti;
 template <typename CodecT>
 class gwcEtiTcpConnectionDelegate : public SbfTcpConnectionDelegate
@@ -40,18 +52,20 @@ class gwcEti : public gwcConnector
     friend class gwcEtiTcpConnectionDelegate<CodecT>;
     
 public:
+    typedef map<uint64_t, gwcXetraCacheItem*> gwcXetraCacheMap;
+
     gwcEti (neueda::logger* log);
     virtual ~gwcEti ();
 
     virtual bool init (gwcSessionCallbacks* sessionCbs,
-                       gwcMessageCallbacks* messageCbs, 
+                       gwcMessageCallbacks* messageCbs,
                        const neueda::properties& props);
 
     virtual bool start (bool reset);
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL); 
+    virtual bool traderLogon (const cdr* msg);
 
     virtual bool sendOrder (gwcOrder& order);
     virtual bool sendOrder (cdr& order);    
@@ -65,7 +79,7 @@ public:
     virtual bool sendMsg (cdr& msg);
     virtual bool sendRaw (void* data, size_t len);
 
-protected:
+protected: 
     SbfTcpConnection*             mTcpConnection;
     gwcEtiTcpConnectionDelegate<CodecT> mTcpConnectionDelegate;
 
@@ -77,10 +91,11 @@ protected:
 
 private:   
     // utility methods
+    void updateSeqNo (uint64_t seqno);
+    void updateApplMsgId (uint64_t partId, string& sMsgId);
     void reset ();
     void error (const string& err);
     void sendRetransRequest ();
-    void updateApplMsgId (string& sMsgId);
     bool mapOrderFields (gwcOrder& gwc);
 
     // handle state
@@ -94,20 +109,22 @@ private:
     void handleReject (cdr& msg);
     void handleRetransMeResponse (cdr& msg);
     void handleTraderLogon (cdr& msg);
+    void handleTraderLogoffResponse (cdr& msg);
     void handleLogoffResponse (cdr& msg);
-    void handleExchangeMsg (int, cdr& msg, const int); 
+    void handleExchangeMsg (int, cdr& msg, const int);
     void handleOrderCancelRejectMsg (cdr& msg);
 
 
     static void* dispatchCb (void* closure);
-    static sbfError cacheFileItemCb (sbfCacheFile file, 
-                                     sbfCacheFileItem item, 
-                                     void* itemData, 
-                                     size_t itemSize, 
+    static sbfError cacheFileItemCb (sbfCacheFile file,
+                                     sbfCacheFileItem item,
+                                     void* itemData,
+                                     size_t itemSize,
                                      void* closure);
     static void onHbTimeout (sbfTimer timer, void* closure);
     static void onReconnect (sbfTimer timer, void* closure);
 
+    gwcXetraCacheMap mCacheMap;
     // members 
     sbfTcpConnectionAddress mTcpHost;
     bool                    mDispatching;
@@ -116,8 +133,7 @@ private:
     CodecT                  mCodec;
     bool                    mSeenHb;
     int                     mMissedHb;
-    uint64_t                mOutboundSeqNo;
-    int64_t                 mPartition;
+    uint64_t                mSeqNo;
     char                    mLastApplMsgId[16];
     char                    mCurrentRecoveryEnd[16];
     int64_t                 mRecoveryMsgCnt;

@@ -62,7 +62,7 @@ public:
 
     virtual bool stop ();
 
-    virtual bool traderLogon (string& traderId, const cdr* msg = NULL) { return false; }
+    virtual bool traderLogon (const cdr* msg) { return false; }
     
     virtual bool sendRaw (void* data, size_t len);
     

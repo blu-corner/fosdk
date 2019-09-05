@@ -108,6 +108,7 @@ protected:
 
     cdr setCdr (cdr d, int templateID, string status)
     {
+        d.setInteger (MsgSeqNum, 10);
         d.setInteger (TemplateID, templateID);
         d.setInteger (SendingTime, 1558520998956394194);
         d.setInteger (PartitionID, 31);
@@ -131,7 +132,7 @@ protected:
 
         switch (templateID)
         {
-        case 10101:
+        case 10102:
             d.setString (ExecType, "0");
             break;
         case 10103:
@@ -145,7 +146,7 @@ protected:
             d.setInteger (OrigClOrdID, 12345);
             d.setInteger (MarketSegmentID, 12345);
             d.setInteger (Side, 1);
-        case 10107:
+        case 10108:
             d.setString (ExecType, "5");
             d.setDouble (LeavesQty, 10);
             d.setDouble (CumQty, 0);
@@ -259,7 +260,7 @@ protected:
     void mockOrderAck (string status)
     {
         cdr d;
-        d = setCdr (d, 10101, status);
+        d = setCdr (d, 10102, status);
 
         mockTcpMessage (d);
     }
@@ -267,7 +268,7 @@ protected:
     void mockModifyAck (string status)
     {
         cdr d;
-        d = setCdr (d, 10107, status);
+        d = setCdr (d, 10108, status);
 
         mockTcpMessage (d);
     }

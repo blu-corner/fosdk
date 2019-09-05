@@ -66,7 +66,7 @@ gwcEti<CodecT>::gwcEti (neueda::logger* log) :
     mReconnectTimer (NULL),
     mSeenHb (false),
     mMissedHb (0),
-    mOutboundSeqNo (1),
+    mSeqNo (1),
     mRecoveryMsgCnt (0)
 {
     memset (mLastApplMsgId, 0x0, sizeof mLastApplMsgId);    
@@ -120,30 +120,43 @@ gwcEti<CodecT>::sendRetransRequest ()
     cdr out;
     char empty[16];
     memset (empty, 0x0, sizeof empty);
-    string start (mLastApplMsgId, 16); 
+    gwcXetraCacheMap::iterator itr;
+    for(itr = mCacheMap.begin(); itr != mCacheMap.end(); ++itr)
+    {
+        string start (itr->second->mData.mApplMsgId, 16);
 
-    out.setInteger (TemplateID, 10026);
-    out.setInteger (SubscriptionScope, 0); // XXX no value
-    out.setInteger (PartitionID, mPartition);
-    out.setInteger (RefApplID, 4); // session data
-    if (mCacheItem != NULL)
-        out.setString (ApplBegMsgID, start);
-    // aways want to the end            
-    sendMsg (out);
+        out.setInteger (TemplateID, 10026);
+        out.setInteger (SubscriptionScope, 0); // XXX no value
+        out.setInteger (PartitionID, itr->first);
+        out.setInteger (RefApplID, 4); // session data
+        if (mCacheItem != NULL)
+            out.setString (ApplBegMsgID, start);
+        // aways want to the end            
+        sendMsg (out);
+    }
 }
 
 template <typename CodecT>
 void
-gwcEti<CodecT>::updateApplMsgId (string& sMsgId)
+gwcEti<CodecT>::updateApplMsgId (uint64_t partId, string& sMsgId)
 {
-    memcpy (mLastApplMsgId, sMsgId.c_str (), sizeof mLastApplMsgId);
-    if (mCacheItem == NULL)
+    gwcXetraCacheMap::iterator itr = mCacheMap.find (partId);
+
+    if (itr != mCacheMap.end ())
     {
-        mCacheItem = sbfCacheFile_add (mCacheFile, mLastApplMsgId);
+        memcpy (itr->second->mData.mApplMsgId, sMsgId.c_str (), sizeof itr->second->mData.mApplMsgId);
+        sbfCacheFile_write (itr->second->mItem, &itr->second->mData);
         sbfCacheFile_flush (mCacheFile);
         return;
-    } 
-    sbfCacheFile_write (mCacheItem, mLastApplMsgId);
+    }
+
+    // haven't seen this partition before so add it
+    gwcXetraCacheItem* ci = new gwcXetraCacheItem ();
+    ci->mData.mParitionId = partId;
+    memcpy (ci->mData.mApplMsgId, sMsgId.c_str (), sizeof ci->mData.mApplMsgId);
+    ci->mItem = sbfCacheFile_add (mCacheFile, &ci->mData);
+
+    mCacheMap[partId] = ci;
     sbfCacheFile_flush (mCacheFile);
 } 
 
@@ -157,7 +170,7 @@ gwcEti<CodecT>::onTcpConnectionReady ()
 
 	// session logon 
 	d.setInteger (TemplateID, 10000);
-	d.setInteger (MsgSeqNum, mOutboundSeqNo);
+	d.setInteger (MsgSeqNum, mSeqNo);
 	d.setInteger (HeartBtInt, 10000);
 	d.setString (DefaultCstmApplVerID, "7.1");
 	d.setString (ApplUsageOrders, "A");
@@ -254,6 +267,21 @@ gwcEti<CodecT>::onReconnect (sbfTimer timer, void* closure)
 }
 
 template <typename CodecT>
+void
+gwcEti<CodecT>::updateSeqNo (uint64_t seqno)
+{
+    mSeqNo = seqno;
+    if(mCacheItem == NULL)
+    {
+        mCacheItem = sbfCacheFile_add (mCacheFile, &mSeqNo);    
+        sbfCacheFile_flush (mCacheFile);
+        return;
+    }
+    sbfCacheFile_write (mCacheItem, &mSeqNo);
+    sbfCacheFile_flush (mCacheFile);
+}
+
+template <typename CodecT>
 void* 
 gwcEti<CodecT>::dispatchCb (void* closure)
 {
@@ -267,7 +295,7 @@ void
 gwcEti<CodecT>::reset ()
 {
     lock ();
-    mOutboundSeqNo = 1;
+    mSeqNo = 1;
 
     if (mTcpConnection)
         delete mTcpConnection;
@@ -316,6 +344,14 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
     int64_t templateId = 0;
     msg.getInteger (TemplateID, templateId);
 
+    /* not a book order execution*/
+    if(templateId != 10104) 
+    {
+        uint64_t seqno;
+        msg.getInteger (MsgSeqNum, seqno);
+        updateSeqNo(seqno);
+    }
+
     mLog->info ("msg in..");
     mLog->info ("%s", msg.toString ().c_str ());
 
@@ -335,20 +371,15 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
         {
             mState = GWC_CONNECTOR_READY;
             mLog->info ("session logon complete");
-            msg.getInteger (PartitionID, mPartition);
             mMessageCbs->onAdmin (1, msg);
             mSessionsCbs->onLoggedOn (1, msg);
+            loggedOnEvent();
 
             mHb = sbfTimer_create (sbfMw_getDefaultThread (mMw),
                                    mQueue,
                                    gwcEti::onHbTimeout,
                                    this,
                                    10.0);
-
-            /* send retrans request */
-            sendRetransRequest ();
-
-            loggedOnEvent ();
         }
         /* rejected logon */ 
         else if (templateId == 10010)
@@ -367,7 +398,9 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
 
     if (msg.getString (ApplMsgID, applMsgId))
     {
-        updateApplMsgId (applMsgId);
+        uint16_t partitionId;
+        msg.getInteger (PartitionID, partitionId);
+        updateApplMsgId (partitionId ,applMsgId);
         if (ApplResendFlag == 1)
         {
             mRecoveryMsgCnt--;
@@ -395,16 +428,26 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
     {        
     case 10019:
         handleTraderLogon (msg);
+        if(!mCacheMap.empty())
+        {
+            /* send retrans request */
+            sendRetransRequest ();
+        }
         break;
     case 10003:
     case 10012: // forced logoff    
         handleLogoffResponse (msg);
         break;
+    case 10024: //forced trader logoff
+        handleTraderLogoffResponse (msg);
+        break;
     case 10027:
         handleRetransMeResponse (msg);
         break;
     case 10101: // order ack
+    case 10102: // order ack (LEAN)
     case 10107: // modify ack
+    case 10108: // modify ack (LEAN)
     case 10103: // immediate fill
     case 10104: // book fill
         handleExchangeMsg (seqnum, msg, templateId);
@@ -458,9 +501,8 @@ template <typename CodecT>
 void
 gwcEti<CodecT>::handleTraderLogon (cdr& msg)
 {
-    string traderId;
-
-    mSessionsCbs->onTraderLogonOn (traderId, msg);
+    mSessionsCbs->onTraderLoggedOn (msg);
+    traderLoggedOnEvent ();
 }
 
 template <typename CodecT>
@@ -484,14 +526,27 @@ gwcEti<CodecT>::handleLogoffResponse (cdr& msg)
 
 template <typename CodecT>
 void
+gwcEti<CodecT>::handleTraderLogoffResponse (cdr& msg)
+{
+    int64_t seqnum = 0;
+    msg.getInteger (MsgSeqNum, seqnum);
+    mMessageCbs->onAdmin (seqnum, msg);
+    mSessionsCbs->onTraderLoggedOff (msg);
+    traderLoggedOffEvent ();
+}
+
+template <typename CodecT>
+void
 gwcEti<CodecT>::handleExchangeMsg (int seqnum, cdr& msg, const int templateId)
 {
     switch (templateId)
     {
     case 10101:
+    case 10102:
     case 10107:
+    case 10108:
     {
-        if (templateId == 10101)
+        if (templateId == 10101 || templateId == 10102)
             mMessageCbs->onOrderAck (seqnum, msg);
         else
             mMessageCbs->onModifyAck (seqnum, msg);
@@ -638,6 +693,11 @@ gwcEti<CodecT>::stop ()
         return true;
     }
     unlock ();
+    cdr traderLogoff;   
+    traderLogoff.setInteger (TemplateID, 10029);
+    mSessionsCbs->onTraderLoggingOff (traderLogoff);
+    if (!sendMsg (traderLogoff))
+        return false;
 
     cdr logoff;
     logoff.setInteger (TemplateID, 10002);
@@ -783,7 +843,6 @@ gwcEti<CodecT>::sendMsg (cdr& msg)
     size_t used;
     bool hb = false;
     int64_t templateId;
-
     // use a codec from the stack gets around threading issues
     CodecT codec;
 
@@ -799,14 +858,14 @@ gwcEti<CodecT>::sendMsg (cdr& msg)
     hb = templateId == 10011 ? true : false;
 
     if (!hb)
-        mOutboundSeqNo++;
-    msg.setInteger (MsgSeqNum, mOutboundSeqNo);
+        mSeqNo++;
+    msg.setInteger (MsgSeqNum, mSeqNo);
     if (codec.encode (msg, space, sizeof space, used) != GW_CODEC_SUCCESS)
     {
         mLog->err ("failed to construct message [%s]", 
                    codec.getLastError ().c_str ());
         if (!hb)
-            mOutboundSeqNo--;
+            mSeqNo--;
         unlock ();
         return false;
     }    
@@ -839,15 +898,15 @@ gwcEti<CodecT>::sendRaw (void* data, size_t len)
 }
 
 template <typename CodecT>
-bool 
-gwcEti<CodecT>::traderLogon (string& traderId, const cdr* msg)
+bool
+gwcEti<CodecT>::traderLogon (const cdr* msg)
 {
     if (msg == NULL)
     {
         mLog->warn ("need to define cdr for tradeLogon");
         return false;
     }
-    
+
     int64_t usr;
     string pass;
     /* need cdr since we need username and passwrd */
@@ -856,7 +915,6 @@ gwcEti<CodecT>::traderLogon (string& traderId, const cdr* msg)
         mLog->warn ("need to define username and password for tradeLogon");
         return false;
     }
-
     cdr tlogon;
     tlogon.setInteger (TemplateID, 10018);
     tlogon.setInteger (Username, usr);
