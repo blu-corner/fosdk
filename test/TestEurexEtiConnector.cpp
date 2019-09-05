@@ -108,6 +108,7 @@ protected:
 
     cdr setCdr (cdr d, int templateID, string status)
     {
+        d.setInteger (MsgSeqNum, 10);
         d.setInteger (TemplateID, templateID);
         d.setInteger (SendingTime, 1558520998956394194);
         d.setInteger (PartitionID, 31);

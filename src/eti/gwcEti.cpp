@@ -445,7 +445,9 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
         handleRetransMeResponse (msg);
         break;
     case 10101: // order ack
+    case 10102: // order ack (LEAN)
     case 10107: // modify ack
+    case 10108: // modify ack (LEAN)
     case 10103: // immediate fill
     case 10104: // book fill
         handleExchangeMsg (seqnum, msg, templateId);
@@ -540,9 +542,11 @@ gwcEti<CodecT>::handleExchangeMsg (int seqnum, cdr& msg, const int templateId)
     switch (templateId)
     {
     case 10101:
+    case 10102:
     case 10107:
+    case 10108:
     {
-        if (templateId == 10101)
+        if (templateId == 10101 || templateId == 10102)
             mMessageCbs->onOrderAck (seqnum, msg);
         else
             mMessageCbs->onModifyAck (seqnum, msg);
