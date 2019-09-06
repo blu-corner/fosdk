@@ -344,8 +344,8 @@ gwcEti<CodecT>::handleTcpMsg (cdr& msg)
     int64_t templateId = 0;
     msg.getInteger (TemplateID, templateId);
 
-    /* not a book order execution*/
-    if(templateId != 10104) 
+    /* not a book order execution or mass cancellation notification*/
+    if(templateId != 10104 && templateId != 10122)
     {
         uint64_t seqno;
         msg.getInteger (MsgSeqNum, seqno);
