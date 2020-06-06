@@ -45,6 +45,7 @@ option(PYTHON "Enable Python bindings" OFF)
 option(CSHARP "Enable C# bindings" OFF)
 option(COVERAGE "Enable gcov coverage" OFF)
 option(EXAMPLES "Enable compilation of examples" OFF)
+option(CDR_JSON_SUPPORT "Enable cdr json support" OFF)
 set(PYTHON_CONFIG "python3-config" CACHE STRING "python-config for build env config")
 
 # set version info
@@ -161,7 +162,7 @@ ExternalProject_Add(
   CDR_PROJECT
   PREFIX ${SUBMODULE_PREFIX_DIR}
   SOURCE_DIR ${CDR_CMAKE}
-  CMAKE_ARGS -DSUBMODULE_PREFIX_DIR=${SUBMODULE_PREFIX_DIR} -DSUBMODULE_ROOT_DIR=${SUBMODULE_ROOT_DIR} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} ${SUBMODULE_FLAGS}
+  CMAKE_ARGS -DSUBMODULE_PREFIX_DIR=${SUBMODULE_PREFIX_DIR} -DSUBMODULE_ROOT_DIR=${SUBMODULE_ROOT_DIR} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DJSON=${CDR_JSON_SUPPORT} ${SUBMODULE_FLAGS}
   )
 ExternalProject_Get_Property(CDR_PROJECT binary_dir)
 set(CDR_PROJECT_DIR ${binary_dir}/lib/cmake/cdr CACHE PATH "location of cdr cmake files" FORCE)
