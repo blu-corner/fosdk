@@ -67,7 +67,8 @@ gwcFix::gwcFix (neueda::logger* log) :
     mHb (NULL),
     mReconnectTimer (NULL),
     mSeenHb (false),
-    mMissedHb (0)
+    mMissedHb (0),
+    mEncryptMethod (0)
 {
     mSeqnums.mInbound = 1;
     mSeqnums.mOutbound = 1;
@@ -121,7 +122,9 @@ gwcFix::onTcpConnectionReady ()
 
     cdr d;
     d.setString (MsgType, FixLogon);
-    d.setInteger (ResetSeqNumFlag, mResetSeqNumFlag ? 'Y' : 'N');
+    d.setString (ResetSeqNumFlag, mResetSeqNumFlag ? "Y" : "N");
+    d.setInteger (EncryptMethod, mEncryptMethod);
+    d.setInteger (HeartBtInt, mHeartBtInt);
     setHeader (d);
 
     mSessionsCbs->onLoggingOn (d);
@@ -274,8 +277,8 @@ gwcFix::getTime (cdrDateTime& dt)
     t = time(NULL);
     tmp = gmtime (&t);
 
-    dt.mYear = tmp->tm_year;
-    dt.mMonth = tmp->tm_mon;
+    dt.mYear = 1900 + tmp->tm_year;
+    dt.mMonth = 1 + tmp->tm_mon;
     dt.mDay = tmp->tm_mday;
 
     dt.mHour = tmp->tm_hour;
@@ -293,8 +296,6 @@ gwcFix::setHeader (cdr& d)
     d.setString (SenderCompID, mSenderCompID);
     d.setString (TargetCompID, mTargetCompID);
     d.setInteger (MsgSeqNum, mSeqnums.mOutbound);
-    d.setInteger (EncryptMethod, 0);
-    d.setInteger (HeartBtInt, mHeartBtInt);
 
     cdrDateTime dt;
     getTime (dt);

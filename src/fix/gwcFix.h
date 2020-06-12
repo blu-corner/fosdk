@@ -154,6 +154,7 @@ private:
     fixCodec                mCodec;
     bool                    mSeenHb;
     int                     mMissedHb;
+    int                     mEncryptMethod;
     gwcFixSeqnums           mSeqnums;
 };
 
