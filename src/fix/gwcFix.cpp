@@ -181,6 +181,7 @@ gwcFix::onTcpConnectionRead (void* data, size_t size)
             break;
         }
         data = (char*)data + used; 
+        msg.clear ();
     }
 
     return size - left;
@@ -305,8 +306,8 @@ gwcFix::setHeader (cdr& d)
 void 
 gwcFix::handleTcpMsg (cdr& msg)
 {
-    mLog->info ("msg in..");
-    mLog->info ("%s", msg.toString ().c_str ());
+    mLog->debug ("msg in..");
+    mLog->debug ("%s", msg.toString ().c_str ());
     /* any message counts as a hb */
     mSeenHb = true;
 
@@ -487,6 +488,8 @@ gwcFix::handleSequenceResetMsg (int64_t seqno, cdr& msg)
     int64_t newseqno;
     if (!msg.getInteger (NewSeqNo, newseqno))
         return;
+
+    mLog->debug ("sequence reset: %ld", newseqno);
 
     lock ();
 
@@ -695,10 +698,17 @@ gwcFix::start (bool reset)
     if (mTcpConnection != NULL)
         delete mTcpConnection;
 
-    if (reset)
+    if (reset || mResetSeqNumFlag)
     {
+        lock ();
+
         mSeqnums.mInbound = 1;
         mSeqnums.mOutbound = 1;
+
+        sbfCacheFile_write (mCacheItem, &mSeqnums);
+        sbfCacheFile_flush (mCacheFile);
+
+        unlock ();
     }
 
     mTcpConnection = new SbfTcpConnection (mSbfLog,
@@ -981,8 +991,8 @@ gwcFix::sendMsg (cdr& msg)
         return false;
     }
 
-    mLog->info ("msg out..");
-    mLog->info ("%s", msg.toString ().c_str ());
+    mLog->debug ("msg out..");
+    mLog->debug ("%s", msg.toString ().c_str ());
 
     mTcpConnection->send (space, used);
 
