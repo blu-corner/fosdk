@@ -70,7 +70,8 @@ gwcFix::gwcFix (neueda::logger* log) :
     mReconnectTimer (NULL),
     mSeenHb (false),
     mMissedHb (0),
-    mEncryptMethod (0)
+    mEncryptMethod (0),
+    mSetNextExpSeqNum (false)
 {
     mSeqnums.mInbound = 1;
     mSeqnums.mOutbound = 1;
@@ -129,6 +130,9 @@ gwcFix::onTcpConnectionReady ()
         d.setString (ResetSeqNumFlag, "Y");
     else
         d.setString (ResetSeqNumFlag, "N");
+
+    if (mSetNextExpSeqNum)
+        d.setInteger (NextExpectedMsgSeqNum, mSeqnums.mInbound);
 
     d.setInteger (EncryptMethod, mEncryptMethod);
     d.setInteger (HeartBtInt, mHeartBtInt);
@@ -626,6 +630,15 @@ gwcFix::init (gwcSessionCallbacks* sessionCbs,
         if (!valid)
         {
             mLog->err ("failed to parse reset_on_logon to bool");
+            return false;
+        }
+    }
+
+    if (props.get ("set_next_expected_seqnum", mSetNextExpSeqNum, valid))
+    {
+        if (!valid)
+        {
+            mLog->err ("failed to parse set_next_expected_seqnum to bool");
             return false;
         }
     }

@@ -157,6 +157,7 @@ private:
     bool                    mSeenHb;
     int                     mMissedHb;
     int                     mEncryptMethod;
+    bool                    mSetNextExpSeqNum;
     gwcFixSeqnums           mSeqnums;
 };
 
