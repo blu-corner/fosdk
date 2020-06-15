@@ -594,20 +594,19 @@ gwcFix::init (gwcSessionCallbacks* sessionCbs,
         return false;
     }
 
-    string hbint;
-    if (props.get ("heartbeat_interval", hbint))
+    bool valid;
+    if (props.get ("heartbeat_interval", mHeartBtInt, valid))
     {
-        if (!utils_parseNumber (hbint, mHeartBtInt))
+        if (!valid)
         {
             mLog->err ("failed to parse heartbeat_interval to integer");
             return false;
         }
     }
 
-    string resetseqno;
-    if (props.get ("reset_sequence_number", resetseqno))
+    if (props.get ("reset_sequence_number", mResetSeqNumFlag, valid))
     {
-        if (!utils_parseBool (resetseqno, mResetSeqNumFlag))
+        if (!valid)
         {
             mLog->err ("failed to parse reset_sequence_number to bool");
             return false;
