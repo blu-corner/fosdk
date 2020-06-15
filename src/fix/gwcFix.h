@@ -148,6 +148,8 @@ private:
     string                  mDataDictionary;
     int                     mHeartBtInt;
     bool                    mResetSeqNumFlag;
+    bool                    mResetOnLogon;
+    bool                    mFirstConnect;
     bool                    mDispatching;
     sbfTimer                mHb;
     sbfTimer                mReconnectTimer;

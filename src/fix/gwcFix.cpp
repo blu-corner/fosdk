@@ -63,6 +63,8 @@ gwcFix::gwcFix (neueda::logger* log) :
     mDataDictionary (""),
     mHeartBtInt (30),
     mResetSeqNumFlag (false),
+    mResetOnLogon (false),
+    mFirstConnect (true),
     mDispatching (false),
     mHb (NULL),
     mReconnectTimer (NULL),
@@ -122,7 +124,12 @@ gwcFix::onTcpConnectionReady ()
 
     cdr d;
     d.setString (MsgType, FixLogon);
-    d.setString (ResetSeqNumFlag, mResetSeqNumFlag ? "Y" : "N");
+
+    if ((mFirstConnect && mResetSeqNumFlag) || mResetOnLogon)
+        d.setString (ResetSeqNumFlag, "Y");
+    else
+        d.setString (ResetSeqNumFlag, "N");
+
     d.setInteger (EncryptMethod, mEncryptMethod);
     d.setInteger (HeartBtInt, mHeartBtInt);
     setHeader (d);
@@ -356,6 +363,7 @@ gwcFix::handleTcpMsg (cdr& msg)
                 unlock ();
             }
 
+            mFirstConnect = false;
             mSessionsCbs->onLoggedOn (seqnum, msg);
             loggedOnEvent ();         
         }
@@ -613,6 +621,15 @@ gwcFix::init (gwcSessionCallbacks* sessionCbs,
         }
     }
 
+    if (props.get ("reset_on_logon", mResetOnLogon, valid))
+    {
+        if (!valid)
+        {
+            mLog->err ("failed to parse reset_on_logon to bool");
+            return false;
+        }
+    }
+
     if (!props.get ("target_comp_id", mTargetCompID))
     {
         mLog->err ("missing property target_comp_id");
@@ -700,6 +717,10 @@ gwcFix::start (bool reset)
     if (reset || mResetSeqNumFlag)
     {
         lock ();
+
+        // set ResetSeqNumFlag true if reset has been passed
+        // at call to start
+        mResetSeqNumFlag = true;
 
         mSeqnums.mInbound = 1;
         mSeqnums.mOutbound = 1;
