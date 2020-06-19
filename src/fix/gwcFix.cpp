@@ -75,6 +75,9 @@ gwcFix::gwcFix (neueda::logger* log) :
 {
     mSeqnums.mInbound = 1;
     mSeqnums.mOutbound = 1;
+
+    mMsgInWriter = NULL;
+    mMsgOutWriter = NULL;
 }
 
 gwcFix::~gwcFix ()
@@ -93,6 +96,10 @@ gwcFix::~gwcFix ()
         sbfThread_join (mThread);
     if (mMw)
         sbfMw_destroy (mMw);
+    if (mMsgInWriter)
+        mMsgInWriter->teardown ();
+    if (mMsgOutWriter)
+        mMsgOutWriter->teardown ();
 }
 
 sbfError
@@ -187,6 +194,8 @@ gwcFix::onTcpConnectionRead (void* data, size_t size)
             return size;
 
         case GW_CODEC_SUCCESS:
+            if (mMsgInWriter)
+                mMsgInWriter->write (data, used);
             handleTcpMsg (msg);
             left -= used;
             break;
@@ -717,6 +726,79 @@ gwcFix::init (gwcSessionCallbacks* sessionCbs,
         return false;
     }
 
+    int fileCount = 0;
+    int maxSize = 0;
+    string messagesIn;
+    if (props.get ("messages_in", messagesIn))
+    {
+        mLog->info ("inbound messages file: %s", messagesIn.c_str ());
+
+
+        if (props.get ("messages_in_count", fileCount, valid))
+        {
+            if (!valid)
+            {
+                mLog->err ("failed to parse messages_in_count");
+                return false;
+            }
+        }
+
+        if (props.get ("messages_in_maxsize", maxSize, valid))
+        {
+            if (!valid)
+            {
+                mLog->err ("failed to parse messages_in_maxsize");
+                return false;
+            }
+        }
+
+        mMsgInWriter = new msgWriter (messagesIn, maxSize, fileCount);
+        if (!mMsgInWriter->setup (err))
+        {
+            mLog->err ("%s", err.c_str ());
+            return false;
+        }
+    }
+
+    string messagesOut;
+    if (props.get ("messages_out", messagesOut))
+    {
+        fileCount = 0;
+        maxSize = 0;
+        mLog->info ("outbound messages file: %s", messagesOut.c_str ());
+
+        if (props.get ("messages_out_count", fileCount, valid))
+        {
+            if (!valid)
+            {
+                mLog->err ("failed to parse messages_out_count");
+                return false;
+            }
+        }
+
+        if (props.get ("messages_out_maxsize", maxSize, valid))
+        {
+            if (!valid)
+            {
+                mLog->err ("failed to parse messages_out_maxsize");
+                return false;
+            }
+        }
+
+        // same messages file, share writer
+        if (!messagesIn.empty () && messagesIn == messagesOut)
+            mMsgOutWriter = mMsgInWriter;
+        else
+        {
+            mMsgOutWriter = new msgWriter (messagesOut, maxSize, fileCount);
+            if (!mMsgOutWriter->setup (err))
+            {
+                mLog->err ("%s", err.c_str ());
+                return false;
+            }
+        }
+    }
+
     mDispatching = true;
     return true;
 }
@@ -773,6 +855,7 @@ gwcFix::stop ()
         unlock ();
         return true;
     }
+
     unlock ();
 
     cdr logoff;
@@ -1028,6 +1111,8 @@ gwcFix::sendMsg (cdr& msg)
     mLog->debug ("%s", msg.toString ().c_str ());
 
     mTcpConnection->send (space, used);
+    if (mMsgOutWriter)
+        mMsgOutWriter->write ((void*)space, used);
 
     mSeqnums.mOutbound++;
     sbfCacheFile_write (mCacheItem, &mSeqnums);

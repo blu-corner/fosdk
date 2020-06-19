@@ -10,6 +10,7 @@ set (INSTALL_HEADERS
 
 set (SOURCES
   gwcFix.cpp
+  msgWriter.cpp
   )
 
 include_directories(

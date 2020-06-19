@@ -10,6 +10,7 @@
 #include "sbfMw.h"
 
 #include "fixCodec.h"
+#include "msgWriter.h"
 
 #include <map>
 
@@ -159,5 +160,7 @@ private:
     int                     mEncryptMethod;
     bool                    mSetNextExpSeqNum;
     gwcFixSeqnums           mSeqnums;
+    msgWriter*              mMsgInWriter;
+    msgWriter*              mMsgOutWriter;
 };
 
