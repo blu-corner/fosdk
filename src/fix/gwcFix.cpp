@@ -154,6 +154,9 @@ gwcFix::onTcpConnectionReady ()
         return;
     }
 
+    mLog->debug ("msg out..");
+    mLog->debug ("%s", d.toString ().c_str ());
+
     mTcpConnection->send (space, used);
 
     lock ();
