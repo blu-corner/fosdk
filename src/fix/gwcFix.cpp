@@ -159,6 +159,9 @@ gwcFix::onTcpConnectionReady ()
 
     mTcpConnection->send (space, used);
 
+    if (mMsgInWriter)
+        mMsgInWriter->write (data, used);
+
     lock ();
 
     mSeqnums.mOutbound++;
