@@ -34,7 +34,6 @@ ${CMAKE_CURRENT_BINARY_DIR}/gwcOrderType.java
 ${CMAKE_CURRENT_BINARY_DIR}/gwcSessionCallbacks.java
 ${CMAKE_CURRENT_BINARY_DIR}/gwcSide.java
 ${CMAKE_CURRENT_BINARY_DIR}/gwcTif.java
-${CMAKE_CURRENT_BINARY_DIR}/SWIGTYPE_p_std__string.java
 ${CMAKE_CURRENT_BINARY_DIR}/SWIGTYPE_p_void.java
 ${CMAKE_CURRENT_BINARY_DIR}/SWIGTYPE_p_neueda__Buffer.java
 )
